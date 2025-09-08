@@ -1,0 +1,468 @@
+export const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+
+export const STORAGE_KEYS = {
+  AUTH_TOKEN: 'exora_auth_token',
+  USER_DATA: 'exora_user_data',
+} as const;
+
+export const ROUTES = {
+  LOGIN: '/login',
+  DASHBOARD: '/dashboard',
+  HOME: '/',
+} as const;
+
+// Generate dynamic dates for today, tomorrow, and day after tomorrow
+const getFormattedDate = (daysOffset: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysOffset);
+  // Fix timezone issues by using UTC
+  const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+  return utcDate.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
+const getAPIFormattedDate = (daysOffset: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysOffset);
+  return date.toISOString().split('T')[0];
+};
+
+export const MOCK_APPOINTMENTS = [
+  // HOY - 12 citas
+  {
+    id: '1',
+    cliente: 'Jose Morales',
+    telefono: '633902936',
+    servicio: 'Corte de Cabello adulto',
+    variante: 'Degradado Adulto',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '09:00',
+    descuentos: 'No',
+    comentarios: 'Cliente con alergia a la laca. Usar producto alternativo.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '2',
+    cliente: 'Maria García',
+    telefono: '622334455',
+    servicio: 'Peinado y Brushing',
+    variante: 'Ondas Suaves',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '09:30',
+    descuentos: 'Cliente VIP (-20%)',
+    comentarios: 'Cita para evento especial. Traer accesorios propios.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '3',
+    cliente: 'Carlos López',
+    telefono: '688776655',
+    servicio: 'Barba y Bigote',
+    variante: 'Arreglo Clásico',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(0),
+    hora: '10:00',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '4',
+    cliente: 'Alejandro Ruiz',
+    telefono: '644123789',
+    servicio: 'Corte Niño',
+    variante: 'Estilo Juvenil',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '10:30',
+    descuentos: 'Descuento Familiar (-15%)',
+    comentarios: 'Niño muy nervioso, tener paciencia.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '5',
+    cliente: 'Sofia Martín',
+    telefono: '655987654',
+    servicio: 'Mechas y Tinte',
+    variante: 'Reflejos Rubios',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(0),
+    hora: '11:00',
+    descuentos: 'No',
+    comentarios: 'Quiere cambio radical de look.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '6',
+    cliente: 'Manuel Torres',
+    telefono: '677234567',
+    servicio: 'Afeitado Completo',
+    variante: 'Ritual Tradicional',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '11:30',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '7',
+    cliente: 'Carmen Jiménez',
+    telefono: '611456789',
+    servicio: 'Peinado de Novia',
+    variante: 'Recogido Elegante',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(0),
+    hora: '12:00',
+    descuentos: 'Paquete Novias (-10%)',
+    comentarios: 'Boda por la tarde, muy importante que quede perfecto.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '8',
+    cliente: 'Antonio Silva',
+    telefono: '699345678',
+    servicio: 'Corte Clásico',
+    variante: 'Estilo Ejecutivo',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '16:00',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '9',
+    cliente: 'Lucia Fernández',
+    telefono: '622567890',
+    servicio: 'Corte y Brushing',
+    variante: 'Bob Moderno',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(0),
+    hora: '16:30',
+    descuentos: 'No',
+    comentarios: 'Primera visita, consultar estilo preferido.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '10',
+    cliente: 'Diego Moreno',
+    telefono: '666789012',
+    servicio: 'Barba y Bigote',
+    variante: 'Barba Hipster',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '17:00',
+    descuentos: 'No',
+    comentarios: 'Quiere mantener longitud pero dar forma.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '11',
+    cliente: 'Patricia Vega',
+    telefono: '644890123',
+    servicio: 'Tratamiento Keratina',
+    variante: 'Alisado Natural',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(0),
+    hora: '17:30',
+    descuentos: 'Promo Tratamientos (-20%)',
+    comentarios: 'Cabello muy rizado, quiere efecto natural.',
+    apiDate: getAPIFormattedDate(0)
+  },
+  {
+    id: '12',
+    cliente: 'Fernando Castro',
+    telefono: '688012345',
+    servicio: 'Corte y Peinado',
+    variante: 'Fade Americano',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(0),
+    hora: '18:00',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(0)
+  },
+  
+  // MAÑANA - 11 citas
+  {
+    id: '13',
+    cliente: 'Ana Martínez',
+    telefono: '655123456',
+    servicio: 'Color y Mechas',
+    variante: 'Balayage',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '09:00',
+    descuentos: 'Promo Verano (-15%)',
+    comentarios: 'Segundo retoque, usar misma mezcla anterior.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '14',
+    cliente: 'Pedro Sánchez',
+    telefono: '633998877',
+    servicio: 'Corte y Peinado',
+    variante: 'Estilo Moderno',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(1),
+    hora: '09:30',
+    descuentos: 'No',
+    comentarios: 'Cliente nuevo, consultar preferencias.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '15',
+    cliente: 'Laura Ruiz',
+    telefono: '644556677',
+    servicio: 'Tratamiento Capilar',
+    variante: 'Hidratación Profunda',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '10:00',
+    descuentos: 'No',
+    comentarios: 'Cabello muy dañado, usar productos específicos.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '16',
+    cliente: 'Miguel Ángel Ramos',
+    telefono: '677123456',
+    servicio: 'Afeitado y Masaje',
+    variante: 'Experiencia Premium',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(1),
+    hora: '10:30',
+    descuentos: 'No',
+    comentarios: 'Cliente VIP, servicio completo.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '17',
+    cliente: 'Elena Vargas',
+    telefono: '622789456',
+    servicio: 'Peinado Eventos',
+    variante: 'Semi-recogido',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '11:00',
+    descuentos: 'No',
+    comentarios: 'Evento corporativo por la noche.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '18',
+    cliente: 'Raúl Herrera',
+    telefono: '666456789',
+    servicio: 'Corte Cabello y Barba',
+    variante: 'Look Completo',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(1),
+    hora: '11:30',
+    descuentos: 'Combo Completo (-10%)',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '19',
+    cliente: 'Cristina Delgado',
+    telefono: '611345678',
+    servicio: 'Mechas Californianas',
+    variante: 'Efecto Sol',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '12:00',
+    descuentos: 'No',
+    comentarios: 'Quiere efecto muy natural.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '20',
+    cliente: 'Javier Navarro',
+    telefono: '688567890',
+    servicio: 'Corte Degradado',
+    variante: 'Fade Alto',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(1),
+    hora: '16:00',
+    descuentos: 'No',
+    comentarios: 'Le gusta muy corto por los lados.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '21',
+    cliente: 'Beatriz Romero',
+    telefono: '644678901',
+    servicio: 'Corte Bob',
+    variante: 'Bob Asimétrico',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '16:30',
+    descuentos: 'No',
+    comentarios: 'Cambio de look radical.',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '22',
+    cliente: 'Óscar Mendoza',
+    telefono: '677890123',
+    servicio: 'Barba Vintage',
+    variante: 'Estilo Retro',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(1),
+    hora: '17:00',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(1)
+  },
+  {
+    id: '23',
+    cliente: 'Natalia Iglesias',
+    telefono: '622901234',
+    servicio: 'Brushing y Peinado',
+    variante: 'Ondas Vintage',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(1),
+    hora: '17:30',
+    descuentos: 'No',
+    comentarios: 'Estilo años 50.',
+    apiDate: getAPIFormattedDate(1)
+  },
+
+  // PASADO MAÑANA - 10 citas
+  {
+    id: '24',
+    cliente: 'David Roca',
+    telefono: '677890123',
+    servicio: 'Afeitado Clásico',
+    variante: 'Ritual con Toalla Caliente',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(2),
+    hora: '09:00',
+    descuentos: 'No',
+    comentarios: 'Llega 10 minutos tarde, avisado por teléfono.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '25',
+    cliente: 'Isabel Torres',
+    telefono: '611223344',
+    servicio: 'Corte y Color',
+    variante: 'Bob Corto + Tinte',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(2),
+    hora: '09:30',
+    descuentos: 'Descuento Estudiante (-10%)',
+    comentarios: 'Primera vez, explicar bien el proceso.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '26',
+    cliente: 'Roberto Díaz',
+    telefono: '699887766',
+    servicio: 'Corte de Cabello',
+    variante: 'Degradado Lateral',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(2),
+    hora: '10:00',
+    descuentos: 'No',
+    comentarios: '',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '27',
+    cliente: 'Verónica Campos',
+    telefono: '633456789',
+    servicio: 'Alisado Japonés',
+    variante: 'Tratamiento Completo',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(2),
+    hora: '10:30',
+    descuentos: 'Promo Alisados (-25%)',
+    comentarios: 'Proceso largo, bloquear 3 horas.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '28',
+    cliente: 'Adrián Muñoz',
+    telefono: '655789012',
+    servicio: 'Corte Buzz Cut',
+    variante: 'Rapado Militar',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(2),
+    hora: '11:00',
+    descuentos: 'No',
+    comentarios: 'Muy corto, número 1.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '29',
+    cliente: 'Gloria Santos',
+    telefono: '644012345',
+    servicio: 'Permanente Suave',
+    variante: 'Ondas Naturales',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(2),
+    hora: '11:30',
+    descuentos: 'No',
+    comentarios: 'Quiere volumen sin rizar mucho.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '30',
+    cliente: 'Sergio Blanco',
+    telefono: '688234567',
+    servicio: 'Corte y Styling',
+    variante: 'Pompadour Moderno',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(2),
+    hora: '16:00',
+    descuentos: 'No',
+    comentarios: 'Enseñar cómo mantener el peinado.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '31',
+    cliente: 'Mónica Guerrero',
+    telefono: '622345678',
+    servicio: 'Extensiones',
+    variante: 'Mechas con Clip',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(2),
+    hora: '16:30',
+    descuentos: 'No',
+    comentarios: 'Traer extensiones propias.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '32',
+    cliente: 'Francisco Aguilar',
+    telefono: '677456789',
+    servicio: 'Barba y Cejas',
+    variante: 'Arreglo Completo',
+    sucursal: "Lliça d'Amunt",
+    fecha: getFormattedDate(2),
+    hora: '17:00',
+    descuentos: 'No',
+    comentarios: 'Cejas muy pobladas, necesita forma.',
+    apiDate: getAPIFormattedDate(2)
+  },
+  {
+    id: '33',
+    cliente: 'Alicia Herrero',
+    telefono: '611567890',
+    servicio: 'Corte Pixie',
+    variante: 'Estilo Moderno',
+    sucursal: "Granollers",
+    fecha: getFormattedDate(2),
+    hora: '17:30',
+    descuentos: 'No',
+    comentarios: 'Corte muy arriesgado, confirmar antes.',
+    apiDate: getAPIFormattedDate(2)
+  }
+];

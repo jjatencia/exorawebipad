@@ -1,0 +1,36 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+    --exora-primary: #555BF6;
+    --exora-secondary: #FD778B;
+    --exora-dark: #02145C;
+    --exora-light-blue: #D2E9FF;
+    --exora-light-yellow: #FCFFA8;
+    --exora-background: #f8f8f8;
+    --font-main: 'Work Sans', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--exora-background);
+}
+
+#root {
+    min-height: 100vh;
+}
+
+/* Safe area for iPhone */
+@supports (padding: max(0px)) {
+    .safe-area-bottom {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
