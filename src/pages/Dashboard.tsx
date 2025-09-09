@@ -40,14 +40,22 @@ const Dashboard: React.FC = () => {
   };
 
   const handleNext = () => {
+    console.log('handleNext called from swipe, currentIndex:', currentIndex, 'total:', appointments.length);
     if (currentIndex < appointments.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      console.log('Index updated to:', currentIndex + 1);
+    } else {
+      console.log('Cannot go next, already at last card');
     }
   };
 
   const handlePrevious = () => {
+    console.log('handlePrevious called from swipe, currentIndex:', currentIndex);
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      console.log('Index updated to:', currentIndex - 1);
+    } else {
+      console.log('Cannot go previous, already at first card');
     }
   };
 

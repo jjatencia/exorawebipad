@@ -13,7 +13,7 @@ const App: React.FC = () => {
   }, [checkAuth]);
 
   return (
-    <Router>
+    <Router basename="/">
       <div className="app font-main">
         <Routes>
           <Route 

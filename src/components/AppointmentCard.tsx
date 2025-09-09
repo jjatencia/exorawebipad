@@ -61,7 +61,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         zIndex: isActive ? 20 : 10,
         width: '90%',
         maxWidth: '380px',
-        height: '90%', // Usar 90% del contenedor disponible
+        height: '90%', // Using 90% of available container
         maxHeight: '550px',
         minHeight: '400px',
         margin: '0 auto',

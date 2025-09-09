@@ -24,49 +24,17 @@ const CardStack: React.FC<CardStackProps> = ({
   const swipeGesture = useSwipeGesture({
     onSwipeLeft: onNext,
     onSwipeRight: onPrevious,
-    disabled: appointments.length <= 1
+    disabled: appointments.length <= 1,
+    isFirst: currentIndex === 0,
+    isLast: currentIndex === appointments.length - 1
   });
   
   // Force re-render when currentIndex changes to avoid stuck gestures
   React.useEffect(() => {
     // Reset any stuck gesture states when index changes
+    (window as any).currentCardIndex = currentIndex;
   }, [currentIndex]);
 
-  // Stack positioning for 3D effect
-  const getStackStyle = (position: 'current' | 'next' | 'prev') => {
-    const baseStyle = {
-      position: 'absolute' as const,
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '100%',
-    };
-
-    switch (position) {
-      case 'current':
-        return {
-          ...baseStyle,
-          zIndex: 30,
-          transform: 'translateY(0px) scale(1)',
-        };
-      case 'next':
-        return {
-          ...baseStyle,
-          zIndex: 20,
-          transform: 'translateY(8px) scale(0.97)',
-          opacity: 0.8,
-        };
-      case 'prev':
-        return {
-          ...baseStyle,
-          zIndex: 10,
-          transform: 'translateY(16px) scale(0.94)',
-          opacity: 0.6,
-        };
-      default:
-        return baseStyle;
-    }
-  };
 
   if (!currentAppointment) {
     return (
@@ -124,7 +92,7 @@ const CardStack: React.FC<CardStackProps> = ({
 
       {/* Current appointment card with swipe */}
       <animated.div 
-        key={`swipe-${currentIndex}-${currentAppointment.id}`}
+        key={`swipe-${currentAppointment.id}`}
         {...swipeGesture.bind()}
         className="absolute w-full h-full flex justify-center items-center"
         style={{ 
