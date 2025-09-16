@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AuthState, User } from '../types';
 import { STORAGE_KEYS } from '../utils/constants';
-import { authService } from '../services/auth.service';
+import { AuthService } from '../../lib/auth';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -11,57 +11,46 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email: string, password: string) => {
     try {
-      // Try real API first
-      const response = await authService.login({ email, password });
-      
-      // Store in localStorage
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.user));
-      
-      set({
-        user: response.user,
-        token: response.token,
-        isAuthenticated: true
-      });
-      
-      toast.success(`Bienvenido, ${response.user.name}`);
+      const response = await AuthService.login({ email, password });
+
+      if (response.ok && response.token && response.user) {
+        // Store in localStorage
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.user));
+
+        set({
+          user: {
+            id: response.user._id,
+            name: response.user.nombre,
+            email: response.user.email,
+            role: 'profesional'
+          },
+          token: response.token,
+          isAuthenticated: true
+        });
+
+        toast.success(`Bienvenido, ${response.user.nombre}`);
+      } else {
+        throw new Error(response.msg || 'Error de autenticación');
+      }
     } catch (error: any) {
-      console.warn('API login failed, using mock authentication');
-      
-      // Fallback to mock authentication for development
-      const mockUser = {
-        id: 'mock-user-1',
-        name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-        email: email,
-        role: 'barbero'
-      };
-      
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      
-      // Store in localStorage
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(mockUser));
-      
-      set({
-        user: mockUser,
-        token: mockToken,
-        isAuthenticated: true
-      });
-      
-      toast.success(`Bienvenido, ${mockUser.name}! (Modo desarrollo)`);
+      console.error('Login error:', error);
+      toast.error(error.message || 'Error de autenticación');
+      throw error;
     }
   },
 
   logout: () => {
+    AuthService.logout();
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-    
+
     set({
       user: null,
       token: null,
       isAuthenticated: false
     });
-    
+
     toast.success('Sesión cerrada correctamente');
   },
 

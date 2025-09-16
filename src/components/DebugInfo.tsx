@@ -38,7 +38,7 @@ const DebugInfo: React.FC = () => {
           {appointments.length > 0 ? (
             appointments.map((app, i) => (
               <div key={i} className="ml-2">
-                • {app.cliente}: {app.hora}
+                • {app.usuario.nombre} {app.usuario.apellidos}: {new Date(app.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
               </div>
             ))
           ) : (

@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AppointmentState } from '../types';
-import { apiService } from '../services/api';
-import { MOCK_APPOINTMENTS } from '../utils/constants';
+import { AppointmentsService } from '../../lib/appointments';
 import { formatDateForAPI } from '../utils/helpers';
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
@@ -14,7 +13,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   fetchAppointments: async (date: string) => {
     const currentState = get();
-    
+
     // Avoid duplicate requests
     if (currentState.isLoading && currentState.currentDate === date) {
       return;
@@ -23,33 +22,39 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const appointments = await apiService.getAppointments(date);
-      
-      set({
-        appointments,
-        currentDate: date,
-        currentIndex: 0,
-        isLoading: false,
-        error: null
+      // Convert date string to ISO format for API
+      const dateForAPI = new Date(date + 'T00:00:00.000Z').toISOString();
+
+      const response = await AppointmentsService.fetchAppointments({
+        empresa: "662f5bb1f956857b8cd0d9c7", // From JWT token
+        fecha: dateForAPI
       });
+
+      if (response.ok) {
+        set({
+          appointments: response.citas,
+          currentDate: date,
+          currentIndex: 0,
+          isLoading: false,
+          error: null
+        });
+
+        toast.success(`Citas cargadas: ${response.citas.length}`);
+      } else {
+        throw new Error('Error al obtener las citas');
+      }
     } catch (error: any) {
-      console.warn('API not available, using mock data');
-      
-      // Fallback to mock data if API fails
-      const mockData = MOCK_APPOINTMENTS.filter((appointment) => {
-        // Filter appointments by the selected date
-        return appointment.apiDate === date;
-      });
+      console.error('Error fetching appointments:', error);
 
       set({
-        appointments: mockData,
+        appointments: [],
         currentDate: date,
         currentIndex: 0,
         isLoading: false,
-        error: null
+        error: error.message || 'Error al cargar las citas'
       });
 
-      toast.success(`Datos cargados: ${mockData.length} citas`);
+      toast.error(error.message || 'Error al cargar las citas');
     }
   },
 

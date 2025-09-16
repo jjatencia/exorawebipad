@@ -1,9 +1,4 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
+import { AuthService } from './auth';
 
 export interface Usuario {
   _id: string;
@@ -92,38 +87,47 @@ export interface Appointment {
   venta?: string;
 }
 
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  checkAuth: () => void;
+export interface AppointmentsResponse {
+  ok: boolean;
+  citas: Appointment[];
+  fecha: string;
+  profesional: string;
 }
 
-export interface AppointmentState {
-  appointments: Appointment[];
-  currentDate: string;
-  currentIndex: number;
-  isLoading: boolean;
-  error: string | null;
-  fetchAppointments: (date: string) => Promise<void>;
-  setCurrentIndex: (index: number) => void;
-  setCurrentDate: (date: string) => void;
-  clearError: () => void;
+export interface FetchAppointmentsParams {
+  empresa: string;
+  fecha: string;
 }
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
+export class AppointmentsService {
+  private static readonly API_BASE = 'https://api.exora.app/api';
 
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
+  static async fetchAppointments(params: FetchAppointmentsParams): Promise<AppointmentsResponse> {
+    const token = AuthService.getToken();
 
-export interface ApiError {
-  message: string;
-  status?: number;
+    if (!token) {
+      throw new Error('Token de autenticación requerido');
+    }
+
+    try {
+      const response = await fetch(`${this.API_BASE}/citas/dia/profesional`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-token': token,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      throw error;
+    }
+  }
 }

@@ -75,17 +75,20 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           {/* Cliente Name */}
           <div className="text-center mb-3">
             <h2 className="text-3xl font-bold text-gray-900 leading-tight">
-              {appointment.cliente}
+              {appointment.usuario.nombre} {appointment.usuario.apellidos}
             </h2>
           </div>
 
           {/* Hora */}
           <div className="text-center mb-5">
-            <div 
+            <div
               className="text-5xl font-bold leading-none"
               style={{ color: 'var(--exora-primary)' }}
             >
-              {appointment.hora}
+              {new Date(appointment.fecha).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </div>
           </div>
         </div>
@@ -94,32 +97,38 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div className="flex-1 space-y-4 min-h-0">
           <div className="flex items-center space-x-3 text-gray-700">
             <PhoneIcon />
-            <span className="text-base">{appointment.telefono}</span>
+            <span className="text-base">{appointment.usuario.telefono}</span>
           </div>
 
           <div className="flex items-start space-x-3 text-gray-700">
             <ServiceIcon />
             <div className="flex-1">
-              <div className="text-base font-medium">{appointment.servicio}</div>
-              {appointment.variante && (
-                <div className="text-sm text-gray-600 mt-1">{appointment.variante}</div>
+              <div className="text-base font-medium">
+                {appointment.servicios[0]?.nombre || 'Servicio no especificado'}
+              </div>
+              {appointment.variantes && appointment.variantes.length > 0 && (
+                <div className="text-sm text-gray-600 mt-1">
+                  {appointment.variantes.map(v => v.nombre).join(', ')}
+                </div>
               )}
             </div>
           </div>
 
           <div className="flex items-center space-x-3 text-gray-700">
             <LocationIcon />
-            <span className="text-base">{appointment.sucursal}</span>
+            <span className="text-base">{appointment.sucursal.nombre}</span>
           </div>
 
           <div className="flex items-center space-x-3 text-gray-700">
             <TagIcon />
             <span className="text-base">
-              Descuentos: <span className={appointment.descuentos === 'No' ? 'text-gray-500' : 'text-green-600 font-medium'}>{appointment.descuentos}</span>
+              Estado: <span className={appointment.pagada ? 'text-green-600 font-medium' : 'text-orange-600 font-medium'}>
+                {appointment.pagada ? 'Pagada' : 'Pendiente'}
+              </span>
             </span>
           </div>
 
-          {appointment.comentarios && appointment.comentarios.trim() !== '' && (
+          {appointment.comentarios && appointment.comentarios.length > 0 && (
             <div className="flex items-start space-x-3 text-gray-700 pt-3 border-t border-gray-200 mt-4">
               <div className="flex-shrink-0">
                 <CommentIcon />
@@ -127,7 +136,21 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800 mb-2">Comentarios:</div>
                 <div className="text-sm text-gray-600 leading-relaxed break-words">
-                  {appointment.comentarios}
+                  {appointment.comentarios.join(' | ')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {appointment.usuario.comentarios && appointment.usuario.comentarios.length > 0 && (
+            <div className="flex items-start space-x-3 text-gray-700 pt-3 border-t border-gray-200 mt-4">
+              <div className="flex-shrink-0">
+                <CommentIcon />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-800 mb-2">Comentarios del cliente:</div>
+                <div className="text-sm text-gray-600 leading-relaxed break-words">
+                  {appointment.usuario.comentarios.join(' | ')}
                 </div>
               </div>
             </div>
@@ -136,7 +159,14 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
         {/* Bottom section - Date */}
         <div className="flex-shrink-0 pt-3 border-t border-gray-100 text-center">
-          <div className="text-sm text-gray-500">{appointment.fecha}</div>
+          <div className="text-sm text-gray-500">
+            {new Date(appointment.fecha).toLocaleDateString('es-ES', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </div>
         </div>
       </div>
     </animated.div>

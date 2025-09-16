@@ -57,10 +57,10 @@ const CardStack: React.FC<CardStackProps> = ({
     >
       {/* Background cards for 3D stack effect */}
       {prevAppointment && (
-        <div 
-          key={`prev-${prevAppointment.id}`}
+        <div
+          key={`prev-${prevAppointment._id}`}
           className="absolute w-full h-full flex justify-center items-center transition-all duration-400 ease-in-out"
-          style={{ 
+          style={{
             transform: 'translateY(16px) scale(0.94)',
             opacity: 0.6,
             zIndex: 1
@@ -72,12 +72,12 @@ const CardStack: React.FC<CardStackProps> = ({
           />
         </div>
       )}
-      
+
       {nextAppointment && (
-        <div 
-          key={`next-${nextAppointment.id}`}
+        <div
+          key={`next-${nextAppointment._id}`}
           className="absolute w-full h-full flex justify-center items-center transition-all duration-400 ease-in-out"
-          style={{ 
+          style={{
             transform: 'translateY(8px) scale(0.97)',
             opacity: 0.8,
             zIndex: 2
@@ -91,8 +91,8 @@ const CardStack: React.FC<CardStackProps> = ({
       )}
 
       {/* Current appointment card with swipe */}
-      <animated.div 
-        key={`swipe-${currentAppointment.id}`}
+      <animated.div
+        key={`swipe-${currentAppointment._id}`}
         {...swipeGesture.bind()}
         className="absolute w-full h-full flex justify-center items-center"
         style={{ 
