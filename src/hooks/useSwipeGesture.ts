@@ -51,6 +51,7 @@ export const useSwipeGesture = ({ onSwipeLeft, onSwipeRight, onSwipeDown, disabl
       const trigger = Math.abs(vx) > 0.005 || Math.abs(mx) > 60 || (swipeDirection.current === 'down' && my > 100);
       const shouldSwipe = !down && trigger;
 
+
       if (shouldSwipe && !canceled) {
         // Use captured direction instead of mx at release (which can be 0)
         const side = swipeDirection.current || (mx < 0 ? 'left' : 'right');

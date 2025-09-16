@@ -31,6 +31,7 @@ const CardStack: React.FC<CardStackProps> = ({
     isFirst: currentIndex === 0,
     isLast: currentIndex === appointments.length - 1
   });
+
   
   // Force re-render when currentIndex changes to avoid stuck gestures
   React.useEffect(() => {
@@ -98,9 +99,9 @@ const CardStack: React.FC<CardStackProps> = ({
         key={`swipe-${currentAppointment._id}`}
         {...swipeGesture.bind()}
         className="absolute w-full h-full flex justify-center items-center"
-        style={{ 
+        style={{
           ...swipeGesture.style,
-          touchAction: 'pan-y',
+          touchAction: 'none',
           zIndex: 3
         }}
       >
