@@ -26,7 +26,7 @@ export const useSwipeGesture = ({ onSwipeLeft, onSwipeRight, onSwipeDown, disabl
 
 
   const bind = useDrag(
-    ({ down, movement: [mx, my], direction: [xDir], velocity: [vx], cancel, canceled }) => {
+    ({ down, movement: [mx, my], velocity: [vx], cancel, canceled }) => {
       
       if (disabled) {
         return;

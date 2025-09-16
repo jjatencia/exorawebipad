@@ -7,13 +7,12 @@ import CardStack from '../components/CardStack';
 import DateSelector from '../components/DateSelector';
 import BottomNavigation from '../components/BottomNavigation';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { formatDateForAPI, formatDateForAPILocal } from '../utils/helpers';
+import { formatDateForAPILocal } from '../utils/helpers';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
   const {
-    appointments,
     filteredAppointments,
     currentDate,
     currentIndex,
@@ -74,9 +73,6 @@ const Dashboard: React.FC = () => {
     fetchAppointments(currentDate);
   };
 
-  const handleTogglePaid = () => {
-    toggleShowPaid();
-  };
 
   const handleAdd = () => {
     toast.success('Funcionalidad de agregar cita no implementada');

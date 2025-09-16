@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
-import { AppointmentState } from '../types';
+import { AppointmentState, Appointment } from '../types';
 import { AppointmentsService } from '../../lib/appointments';
 import { formatDateForAPILocal } from '../utils/helpers';
 
