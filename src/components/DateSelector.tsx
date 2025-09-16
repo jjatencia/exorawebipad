@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatDate, formatDateForAPI } from '../utils/helpers';
+import { formatDate, formatDateForAPILocal } from '../utils/helpers';
 
 interface DateSelectorProps {
   selectedDate: string;
@@ -43,9 +43,9 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
 
     return [
-      { label: 'Hoy', date: formatDateForAPI(today) },
-      { label: 'Mañana', date: formatDateForAPI(tomorrow) },
-      { label: 'Pasado mañana', date: formatDateForAPI(dayAfterTomorrow) }
+      { label: 'Hoy', date: formatDateForAPILocal(today) },
+      { label: 'Mañana', date: formatDateForAPILocal(tomorrow) },
+      { label: 'Pasado mañana', date: formatDateForAPILocal(dayAfterTomorrow) }
     ];
   };
 

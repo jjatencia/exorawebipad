@@ -9,13 +9,15 @@ interface CardStackProps {
   currentIndex: number;
   onNext: () => void;
   onPrevious: () => void;
+  onRefresh?: () => void;
 }
 
 const CardStack: React.FC<CardStackProps> = ({
   appointments,
   currentIndex,
   onNext,
-  onPrevious
+  onPrevious,
+  onRefresh
 }) => {
   const currentAppointment = appointments[currentIndex];
   const nextAppointment = appointments[currentIndex + 1];
@@ -24,6 +26,7 @@ const CardStack: React.FC<CardStackProps> = ({
   const swipeGesture = useSwipeGesture({
     onSwipeLeft: onNext,
     onSwipeRight: onPrevious,
+    onSwipeDown: onRefresh,
     disabled: appointments.length <= 1,
     isFirst: currentIndex === 0,
     isLast: currentIndex === appointments.length - 1

@@ -202,7 +202,10 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800 mb-2">Comentarios:</div>
                 <div className="text-sm text-gray-600 leading-relaxed break-words">
-                  {appointment.comentarios.join(' | ')}
+                  {appointment.comentarios.map(comentario =>
+                    typeof comentario === 'string' ? comentario :
+                    (comentario?.texto || comentario?.comentario || JSON.stringify(comentario))
+                  ).join(' | ')}
                 </div>
               </div>
             </div>
@@ -216,7 +219,10 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800 mb-2">Comentarios del cliente:</div>
                 <div className="text-sm text-gray-600 leading-relaxed break-words">
-                  {appointment.usuario.comentarios.join(' | ')}
+                  {appointment.usuario.comentarios.map(comentario =>
+                    typeof comentario === 'string' ? comentario :
+                    (comentario?.texto || comentario?.comentario || JSON.stringify(comentario))
+                  ).join(' | ')}
                 </div>
               </div>
             </div>

@@ -2,12 +2,22 @@ import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AppointmentState } from '../types';
 import { AppointmentsService } from '../../lib/appointments';
-import { formatDateForAPI } from '../utils/helpers';
+import { formatDateForAPILocal } from '../utils/helpers';
+
+const filterAppointments = (appointments: Appointment[], showPaidOnly: boolean) => {
+  if (showPaidOnly) {
+    return appointments.filter(apt => apt.pagada);
+  } else {
+    return appointments.filter(apt => !apt.pagada);
+  }
+};
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: [],
-  currentDate: formatDateForAPI(new Date()),
+  filteredAppointments: [],
+  currentDate: formatDateForAPILocal(new Date()),
   currentIndex: 0,
+  showPaidOnly: false,
   isLoading: false,
   error: null,
 
@@ -19,7 +29,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       return;
     }
 
-    set({ isLoading: true, error: null });
+    // Limpiar datos anteriores al cambiar de fecha
+    set({
+      isLoading: true,
+      error: null,
+      appointments: [],
+      filteredAppointments: [],
+      currentIndex: 0,
+      showPaidOnly: false // Reset a mostrar no pagadas por defecto
+    });
 
     try {
       // Convert date string to ISO format for API
@@ -31,15 +49,19 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       });
 
       if (response.ok) {
+        const currentState = get();
+        const filtered = filterAppointments(response.citas, currentState.showPaidOnly);
+
         set({
           appointments: response.citas,
+          filteredAppointments: filtered,
           currentDate: date,
           currentIndex: 0,
           isLoading: false,
           error: null
         });
 
-        toast.success(`Citas cargadas: ${response.citas.length}`);
+        toast.success(`Citas cargadas: ${response.citas.length} (${filtered.length} mostradas)`);
       } else {
         throw new Error('Error al obtener las citas');
       }
@@ -48,6 +70,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
       set({
         appointments: [],
+        filteredAppointments: [],
         currentDate: date,
         currentIndex: 0,
         isLoading: false,
@@ -59,14 +82,29 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   },
 
   setCurrentIndex: (index: number) => {
-    const { appointments } = get();
-    if (index >= 0 && index < appointments.length) {
+    const { filteredAppointments } = get();
+    if (index >= 0 && index < filteredAppointments.length) {
       set({ currentIndex: index });
     }
   },
 
   setCurrentDate: (date: string) => {
     set({ currentDate: date });
+  },
+
+  toggleShowPaid: () => {
+    const { appointments, showPaidOnly } = get();
+    const newShowPaidOnly = !showPaidOnly;
+    const filtered = filterAppointments(appointments, newShowPaidOnly);
+
+    // Solo cambiar si hay citas en el nuevo filtro
+    if (filtered.length > 0) {
+      set({
+        showPaidOnly: newShowPaidOnly,
+        filteredAppointments: filtered,
+        currentIndex: 0
+      });
+    }
   },
 
   clearError: () => {

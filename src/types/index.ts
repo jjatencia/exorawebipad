@@ -15,7 +15,7 @@ export interface Usuario {
   saldoMonedero: number;
   delayType: string;
   delay: string;
-  comentarios: string[];
+  comentarios: (string | any)[];
 }
 
 export interface Sucursal {
@@ -76,7 +76,7 @@ export interface Appointment {
   descuentos: any[];
   promocion: any[];
   servicios: Servicio[];
-  comentarios: string[];
+  comentarios: (string | any)[];
   tieneHijas: boolean;
   duracion: string;
   pagada: boolean;
@@ -103,13 +103,16 @@ export interface AuthState {
 
 export interface AppointmentState {
   appointments: Appointment[];
+  filteredAppointments: Appointment[];
   currentDate: string;
   currentIndex: number;
+  showPaidOnly: boolean;
   isLoading: boolean;
   error: string | null;
   fetchAppointments: (date: string) => Promise<void>;
   setCurrentIndex: (index: number) => void;
   setCurrentDate: (date: string) => void;
+  toggleShowPaid: () => void;
   clearError: () => void;
 }
 

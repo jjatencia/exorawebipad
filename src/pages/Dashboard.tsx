@@ -7,19 +7,23 @@ import CardStack from '../components/CardStack';
 import DateSelector from '../components/DateSelector';
 import BottomNavigation from '../components/BottomNavigation';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { formatDateForAPI, formatDateForAPILocal } from '../utils/helpers';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
   const {
     appointments,
+    filteredAppointments,
     currentDate,
     currentIndex,
+    showPaidOnly,
     isLoading,
     error,
     fetchAppointments,
     setCurrentIndex,
-    setCurrentDate
+    setCurrentDate,
+    toggleShowPaid
   } = useAppointmentStore();
 
   useEffect(() => {
@@ -28,6 +32,17 @@ const Dashboard: React.FC = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate, checkAuth]);
+
+  // Solo verificar al cargar la app inicialmente
+  useEffect(() => {
+    const now = new Date();
+    const today = formatDateForAPILocal(now);
+
+    // Solo actualizar a "hoy" si la fecha en el store es anterior a hoy
+    if (currentDate < today) {
+      setCurrentDate(today);
+    }
+  }, []); // Sin dependencias para que solo se ejecute una vez al montar
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -40,23 +55,27 @@ const Dashboard: React.FC = () => {
   };
 
   const handleNext = () => {
-    console.log('handleNext called from swipe, currentIndex:', currentIndex, 'total:', appointments.length);
-    if (currentIndex < appointments.length - 1) {
+    if (currentIndex < filteredAppointments.length - 1) {
       setCurrentIndex(currentIndex + 1);
-      console.log('Index updated to:', currentIndex + 1);
-    } else {
-      console.log('Cannot go next, already at last card');
     }
   };
 
   const handlePrevious = () => {
-    console.log('handlePrevious called from swipe, currentIndex:', currentIndex);
-    if (currentIndex > 0) {
+    // Solo permitir navegación dentro de las citas filtradas del día actual
+    if (currentIndex > 0 && currentIndex <= filteredAppointments.length - 1) {
       setCurrentIndex(currentIndex - 1);
-      console.log('Index updated to:', currentIndex - 1);
-    } else {
-      console.log('Cannot go previous, already at first card');
+    } else if (!showPaidOnly && currentIndex === 0) {
+      // Si estamos en la primera cita no pagada, intentar cambiar a pagadas
+      toggleShowPaid(); // El store se encargará de validar si hay citas pagadas
     }
+  };
+
+  const handleRefresh = () => {
+    fetchAppointments(currentDate);
+  };
+
+  const handleTogglePaid = () => {
+    toggleShowPaid();
   };
 
   const handleAdd = () => {
@@ -87,7 +106,7 @@ const Dashboard: React.FC = () => {
                 Hola, {user.name}
               </h1>
               <p className="text-sm text-gray-600">
-                {appointments.length} citas programadas
+                {filteredAppointments.length} citas {showPaidOnly ? 'pagadas' : 'pendientes'}
               </p>
             </div>
             
@@ -138,10 +157,11 @@ const Dashboard: React.FC = () => {
         ) : (
           <div className="flex-1 flex items-center justify-center px-4 py-4">
             <CardStack
-              appointments={appointments}
+              appointments={filteredAppointments}
               currentIndex={currentIndex}
               onNext={handleNext}
               onPrevious={handlePrevious}
+              onRefresh={handleRefresh}
             />
           </div>
         )}
@@ -150,7 +170,7 @@ const Dashboard: React.FC = () => {
       {/* Bottom Navigation */}
       <BottomNavigation
         canGoBack={currentIndex > 0}
-        canGoForward={currentIndex < appointments.length - 1}
+        canGoForward={currentIndex < filteredAppointments.length - 1}
         onPrevious={handlePrevious}
         onNext={handleNext}
         onAdd={handleAdd}
