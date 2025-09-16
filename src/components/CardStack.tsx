@@ -2,7 +2,7 @@ import React from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import AppointmentCard from './AppointmentCard';
-import { useSwipeGesture } from '../hooks/useSwipeGesture';
+import { useSwipeGestureSimple } from '../hooks/useSwipeGestureSimple';
 
 interface CardStackProps {
   appointments: Appointment[];
@@ -23,7 +23,7 @@ const CardStack: React.FC<CardStackProps> = ({
   const nextAppointment = appointments[currentIndex + 1];
   const prevAppointment = appointments[currentIndex - 1];
 
-  const swipeGesture = useSwipeGesture({
+  const swipeGesture = useSwipeGestureSimple({
     onSwipeLeft: onNext,
     onSwipeRight: onPrevious,
     onSwipeDown: onRefresh,
@@ -96,7 +96,7 @@ const CardStack: React.FC<CardStackProps> = ({
 
       {/* Current appointment card with swipe */}
       <animated.div
-        key={`swipe-${currentAppointment._id}`}
+        key={`swipe-${currentIndex}-${currentAppointment._id}`}
         {...swipeGesture.bind()}
         className="absolute w-full h-full flex justify-center items-center"
         style={{

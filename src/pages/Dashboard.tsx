@@ -54,18 +54,27 @@ const Dashboard: React.FC = () => {
   };
 
   const handleNext = () => {
+    console.log('handleNext called - currentIndex:', currentIndex, 'total:', filteredAppointments.length);
     if (currentIndex < filteredAppointments.length - 1) {
+      console.log('Moving to next index:', currentIndex + 1);
       setCurrentIndex(currentIndex + 1);
+    } else {
+      console.log('Already at last appointment');
     }
   };
 
   const handlePrevious = () => {
+    console.log('handlePrevious called - currentIndex:', currentIndex, 'total:', filteredAppointments.length);
     // Solo permitir navegación dentro de las citas filtradas del día actual
     if (currentIndex > 0 && currentIndex <= filteredAppointments.length - 1) {
+      console.log('Moving to previous index:', currentIndex - 1);
       setCurrentIndex(currentIndex - 1);
     } else if (!showPaidOnly && currentIndex === 0) {
+      console.log('Toggling to paid appointments');
       // Si estamos en la primera cita no pagada, intentar cambiar a pagadas
       toggleShowPaid(); // El store se encargará de validar si hay citas pagadas
+    } else {
+      console.log('Cannot go previous');
     }
   };
 
