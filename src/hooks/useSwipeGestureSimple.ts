@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSpring } from '@react-spring/web';
 import { useDrag } from '@use-gesture/react';
 
@@ -30,7 +29,7 @@ export const useSwipeGestureSimple = ({
   }));
 
   const bind = useDrag(
-    ({ down, movement: [mx, my], cancel }) => {
+    ({ down, movement: [mx, my] }) => {
 
       if (disabled) return;
 
