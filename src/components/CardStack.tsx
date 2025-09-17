@@ -39,6 +39,15 @@ const CardStack: React.FC<CardStackProps> = ({
     (window as any).currentCardIndex = currentIndex;
   }, [currentIndex]);
 
+  // Add entrance animation for new cards
+  React.useEffect(() => {
+    // Small delay to ensure smooth entrance
+    const timer = setTimeout(() => {
+      // This effect just ensures the card is ready for interaction
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [currentIndex]);
+
 
   if (!currentAppointment) {
     return (

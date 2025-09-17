@@ -46,24 +46,26 @@ export const useSwipeGestureSimple = ({
             return;
           }
 
-          // Execute callback
-          if (isLeftSwipe) {
-            onSwipeLeft();
-          } else {
-            onSwipeRight();
-          }
-
-          // Quick exit animation
+          // Smooth exit animation first
           api.start({
-            x: isLeftSwipe ? -300 : 300,
+            x: isLeftSwipe ? -window.innerWidth : window.innerWidth,
             opacity: 0,
-            config: { tension: 300, friction: 30 }
+            scale: 0.9,
+            rotate: isLeftSwipe ? -15 : 15,
+            config: { tension: 180, friction: 26 }
           });
 
-          // Reset for next card
+          // Execute callback after animation starts for smooth transition
           setTimeout(() => {
+            if (isLeftSwipe) {
+              onSwipeLeft();
+            } else {
+              onSwipeRight();
+            }
+
+            // Reset for next card
             api.set({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
-          }, 100);
+          }, 150);
         } else if (Math.abs(my) > 60 && my > 0) {
           // Down swipe for refresh
           if (onSwipeDown) {
@@ -75,13 +77,14 @@ export const useSwipeGestureSimple = ({
           api.start({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
         }
       } else {
-        // Follow finger during drag
+        // Follow finger during drag with smooth feedback
+        const progress = Math.min(Math.abs(mx) / 150, 1);
         api.start({
-          x: mx,
-          y: my * 0.5,
-          opacity: Math.max(0.7, 1 - Math.abs(mx) / 300),
-          scale: Math.max(0.95, 1 - Math.abs(mx) / 500),
-          rotate: mx / 20,
+          x: mx * 0.8, // Slight resistance
+          y: my * 0.3,
+          opacity: Math.max(0.85, 1 - progress * 0.15),
+          scale: Math.max(0.97, 1 - progress * 0.03),
+          rotate: mx / 15, // More subtle rotation
           immediate: true
         });
       }
