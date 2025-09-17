@@ -4,9 +4,26 @@ import { AppointmentState, Appointment } from '../types';
 import { AppointmentsService } from '../../lib/appointments';
 import { formatDateForAPILocal } from '../utils/helpers';
 
-const sortAppointmentsByTime = (appointments: Appointment[]) => {
-  return appointments.sort((a, b) => {
-    // Ordenar por fecha/hora
+const filterAndSortAppointments = (appointments: Appointment[]) => {
+  const now = new Date();
+
+  // Filtrar citas pagadas que ya pasaron su hora + 15 min
+  const filteredAppointments = appointments.filter(appointment => {
+    if (!appointment.pagada) {
+      // Citas no pagadas siempre se muestran
+      return true;
+    }
+
+    // Para citas pagadas, verificar si ya pasaron + 15 min
+    const appointmentDateTime = new Date(appointment.fecha);
+    appointmentDateTime.setMinutes(appointmentDateTime.getMinutes() + 15);
+
+    // Si ya pasó la hora + 15 min, ocultar la cita
+    return now <= appointmentDateTime;
+  });
+
+  // Ordenar por fecha/hora
+  return filteredAppointments.sort((a, b) => {
     const dateA = new Date(a.fecha);
     const dateB = new Date(b.fecha);
     return dateA.getTime() - dateB.getTime();
@@ -50,19 +67,24 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       });
 
       if (response.ok) {
-        // Mostrar TODAS las citas del día, ordenadas por hora
-        const sortedAppointments = sortAppointmentsByTime(response.citas);
+        // Filtrar y ordenar citas según las reglas de negocio
+        const filteredAndSorted = filterAndSortAppointments(response.citas);
 
         set({
           appointments: response.citas,
-          filteredAppointments: sortedAppointments,
+          filteredAppointments: filteredAndSorted,
           currentDate: date,
           currentIndex: 0,
           isLoading: false,
           error: null
         });
 
-        toast.success(`Citas cargadas: ${response.citas.length} (todas mostradas)`);
+        const hiddenCount = response.citas.length - filteredAndSorted.length;
+        const message = hiddenCount > 0
+          ? `Citas cargadas: ${response.citas.length} (${filteredAndSorted.length} mostradas, ${hiddenCount} pagadas finalizadas ocultas)`
+          : `Citas cargadas: ${response.citas.length} (todas mostradas)`;
+
+        toast.success(message);
       } else {
         throw new Error('Error al obtener las citas');
       }
