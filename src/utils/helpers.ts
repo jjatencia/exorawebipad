@@ -37,3 +37,23 @@ export const debounce = <T extends (...args: any[]) => void>(
     timeoutId = window.setTimeout(() => func(...args), delay);
   }) as T;
 };
+
+/**
+ * Determina si una cita debe estar deshabilitada basándose en:
+ * - Si está pagada
+ * - Si ya pasó su hora + 15 minutos de margen
+ */
+export const isAppointmentDisabled = (appointment: any): boolean => {
+  if (!appointment.pagada) {
+    return false;
+  }
+
+  const now = new Date();
+  const appointmentDateTime = new Date(appointment.fecha);
+
+  // Agregar 15 minutos de margen
+  appointmentDateTime.setMinutes(appointmentDateTime.getMinutes() + 15);
+
+  // Si la hora actual es mayor que la hora de la cita + 15 min, deshabilitar
+  return now > appointmentDateTime;
+};

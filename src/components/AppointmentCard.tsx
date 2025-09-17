@@ -1,6 +1,7 @@
 import React from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
+import { isAppointmentDisabled } from '../utils/helpers';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -15,6 +16,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   isActive = false,
   onClick
 }) => {
+  const isDisabled = isAppointmentDisabled(appointment);
 
   // Icono Teléfono (teléfono clásico)
   const PhoneIcon = () => (
@@ -83,10 +85,10 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
     <animated.div
       style={{
         ...style,
-        backgroundColor: 'white',
+        backgroundColor: isDisabled ? '#f8f9fa' : 'white',
         borderRadius: '20px',
-        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
-        cursor: 'pointer',
+        boxShadow: isDisabled ? '0 2px 8px rgba(0, 0, 0, 0.04)' : '0 4px 15px rgba(0, 0, 0, 0.08)',
+        cursor: isDisabled ? 'default' : 'pointer',
         zIndex: isActive ? 20 : 10,
         width: '90%',
         maxWidth: '380px',
@@ -94,16 +96,32 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         maxHeight: '550px',
         minHeight: '400px',
         margin: '0 auto',
-        position: 'relative'
+        position: 'relative',
+        opacity: isDisabled ? 0.6 : 1,
+        transition: 'all 0.3s ease'
       }}
-      onClick={onClick}
+      onClick={isDisabled ? undefined : onClick}
     >
       <div className="p-6 h-full flex flex-col overflow-hidden">
         {/* Top section - Header */}
         <div className="flex-shrink-0">
+          {/* Badge de estado pagada */}
+          {appointment.pagada && (
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                PAGADA
+              </span>
+              {isDisabled && (
+                <span className="text-xs text-gray-500 font-medium">
+                  Cita finalizada
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Cliente Name */}
           <div className="text-center mb-3">
-            <h2 className="text-3xl font-bold text-gray-900 leading-tight">
+            <h2 className={`text-3xl font-bold leading-tight ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>
               {appointment.usuario.nombre} {appointment.usuario.apellidos}
             </h2>
           </div>
@@ -112,7 +130,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           <div className="text-center mb-5">
             <div
               className="text-5xl font-bold leading-none"
-              style={{ color: 'var(--exora-primary)' }}
+              style={{ color: isDisabled ? '#9ca3af' : 'var(--exora-primary)' }}
             >
               {new Date(appointment.fecha).toLocaleTimeString('es-ES', {
                 hour: '2-digit',
@@ -124,12 +142,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
         {/* Middle section - Information */}
         <div className="flex-1 space-y-4 min-h-0">
-          <div className="flex items-center space-x-3 text-gray-700">
+          <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <PhoneIcon />
             <span className="text-base">{appointment.usuario.telefono}</span>
           </div>
 
-          <div className="flex items-start space-x-3 text-gray-700">
+          <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <ServiceIcon />
             <div className="flex-1">
               <div className="text-base font-medium">
@@ -139,38 +157,44 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           </div>
 
           {appointment.variantes && appointment.variantes.length > 0 && (
-            <div className="flex items-start space-x-3 text-gray-700">
+            <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
               <VariantIcon />
               <div className="flex-1">
                 <div className="text-base font-medium">Variante:</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
                   {appointment.variantes.map(v => v.nombre).join(', ')}
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex items-center space-x-3 text-gray-700">
+          <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <LocationIcon />
             <span className="text-base">{appointment.sucursal.nombre}</span>
           </div>
 
-          <div className="flex items-center space-x-3 text-gray-700">
+          <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <PaymentIcon />
             <span className="text-base">
-              Estado: <span className={appointment.pagada ? 'text-green-600 font-medium' : 'text-orange-600 font-medium'}>
+              Estado: <span className={
+                isDisabled
+                  ? 'text-gray-400 font-medium'
+                  : appointment.pagada
+                    ? 'text-green-600 font-medium'
+                    : 'text-orange-600 font-medium'
+              }>
                 {appointment.pagada ? 'Pagada' : 'Pendiente'}
               </span>
             </span>
           </div>
 
           {/* Promociones */}
-          <div className="flex items-start space-x-3 text-gray-700">
+          <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <DiscountIcon />
             <div className="flex-1">
               <div className="text-base font-medium">Promociones:</div>
               {appointment.promocion.length > 0 ? (
-                <div className="text-sm text-gray-600 mt-1">
+                <div className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
                   {appointment.promocion.map((promocionId: string, index: number) => {
                     // Mapeo temporal de IDs a nombres
                     let promocionNombre = "Promoción especial";

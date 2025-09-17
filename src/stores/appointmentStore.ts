@@ -4,12 +4,13 @@ import { AppointmentState, Appointment } from '../types';
 import { AppointmentsService } from '../../lib/appointments';
 import { formatDateForAPILocal } from '../utils/helpers';
 
-const filterAppointments = (appointments: Appointment[], showPaidOnly: boolean) => {
-  if (showPaidOnly) {
-    return appointments.filter(apt => apt.pagada);
-  } else {
-    return appointments.filter(apt => !apt.pagada);
-  }
+const sortAppointmentsByTime = (appointments: Appointment[]) => {
+  return appointments.sort((a, b) => {
+    // Ordenar por fecha/hora
+    const dateA = new Date(a.fecha);
+    const dateB = new Date(b.fecha);
+    return dateA.getTime() - dateB.getTime();
+  });
 };
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
@@ -36,7 +37,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       appointments: [],
       filteredAppointments: [],
       currentIndex: 0,
-      showPaidOnly: false // Reset a mostrar no pagadas por defecto
+      showPaidOnly: false // Mantener por compatibilidad pero no se usa
     });
 
     try {
@@ -49,19 +50,19 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       });
 
       if (response.ok) {
-        const currentState = get();
-        const filtered = filterAppointments(response.citas, currentState.showPaidOnly);
+        // Mostrar TODAS las citas del día, ordenadas por hora
+        const sortedAppointments = sortAppointmentsByTime(response.citas);
 
         set({
           appointments: response.citas,
-          filteredAppointments: filtered,
+          filteredAppointments: sortedAppointments,
           currentDate: date,
           currentIndex: 0,
           isLoading: false,
           error: null
         });
 
-        toast.success(`Citas cargadas: ${response.citas.length} (${filtered.length} mostradas)`);
+        toast.success(`Citas cargadas: ${response.citas.length} (todas mostradas)`);
       } else {
         throw new Error('Error al obtener las citas');
       }
@@ -93,18 +94,9 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   },
 
   toggleShowPaid: () => {
-    const { appointments, showPaidOnly } = get();
-    const newShowPaidOnly = !showPaidOnly;
-    const filtered = filterAppointments(appointments, newShowPaidOnly);
-
-    // Solo cambiar si hay citas en el nuevo filtro
-    if (filtered.length > 0) {
-      set({
-        showPaidOnly: newShowPaidOnly,
-        filteredAppointments: filtered,
-        currentIndex: 0
-      });
-    }
+    // Esta función ya no es necesaria pero la mantenemos por compatibilidad
+    // Ahora siempre mostramos todas las citas
+    console.log('toggleShowPaid: Mostrando todas las citas del día');
   },
 
   clearError: () => {
