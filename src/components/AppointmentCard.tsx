@@ -105,20 +105,6 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <div className="p-6 h-full flex flex-col overflow-hidden">
         {/* Top section - Header */}
         <div className="flex-shrink-0">
-          {/* Badge de estado pagada */}
-          {appointment.pagada && (
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
-                PAGADA
-              </span>
-              {isDisabled && (
-                <span className="text-xs text-gray-500 font-medium">
-                  Cita finalizada
-                </span>
-              )}
-            </div>
-          )}
-
           {/* Cliente Name */}
           <div className="text-center mb-3">
             <h2 className={`text-3xl font-bold leading-tight ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>
