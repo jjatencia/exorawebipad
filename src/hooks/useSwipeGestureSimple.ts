@@ -10,6 +10,21 @@ interface UseSwipeGestureProps {
   isLast?: boolean;
 }
 
+// Animation constants
+const SWIPE_THRESHOLD = 60;
+const VERTICAL_SWIPE_THRESHOLD = 60;
+const ANIMATION_DELAY = 150;
+const DRAG_RESISTANCE = 0.8;
+const VERTICAL_RESISTANCE = 0.3;
+const PROGRESS_DIVISOR = 150;
+
+// Animation configs
+const DEFAULT_CONFIG = { tension: 300, friction: 30 };
+const EXIT_CONFIG = { tension: 180, friction: 26 };
+
+// Reset position object
+const RESET_POSITION = { x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 };
+
 export const useSwipeGestureSimple = ({
   onSwipeLeft,
   onSwipeRight,
@@ -20,76 +35,76 @@ export const useSwipeGestureSimple = ({
 }: UseSwipeGestureProps) => {
 
   const [{ x, y, opacity, scale, rotate }, api] = useSpring(() => ({
-    x: 0,
-    y: 0,
-    opacity: 1,
-    scale: 1,
-    rotate: 0,
-    config: { tension: 300, friction: 30 }
+    ...RESET_POSITION,
+    config: DEFAULT_CONFIG
   }));
 
-  const bind = useDrag(
-    ({ down, movement: [mx, my] }) => {
+  // Helper functions
+  const resetToCenter = () => api.start(RESET_POSITION);
 
-      if (disabled) return;
+  const isAtEdge = (isLeftSwipe: boolean) =>
+    (isFirst && !isLeftSwipe) || (isLast && isLeftSwipe);
 
-      if (!down) {
-        // On release, check if we should swipe
-        const shouldSwipe = Math.abs(mx) > 60;
+  const executeSwipeAnimation = (isLeftSwipe: boolean) => {
+    api.start({
+      x: isLeftSwipe ? -window.innerWidth : window.innerWidth,
+      opacity: 0,
+      scale: 0.9,
+      rotate: isLeftSwipe ? -15 : 15,
+      config: EXIT_CONFIG
+    });
 
-        if (shouldSwipe) {
-          const isLeftSwipe = mx < 0;
-
-          // Check edge cases
-          if ((isFirst && !isLeftSwipe) || (isLast && isLeftSwipe)) {
-            api.start({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
-            return;
-          }
-
-          // Smooth exit animation first
-          api.start({
-            x: isLeftSwipe ? -window.innerWidth : window.innerWidth,
-            opacity: 0,
-            scale: 0.9,
-            rotate: isLeftSwipe ? -15 : 15,
-            config: { tension: 180, friction: 26 }
-          });
-
-          // Execute callback after animation starts for smooth transition
-          setTimeout(() => {
-            if (isLeftSwipe) {
-              onSwipeLeft();
-            } else {
-              onSwipeRight();
-            }
-
-            // Reset for next card
-            api.set({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
-          }, 150);
-        } else if (Math.abs(my) > 60 && my > 0) {
-          // Down swipe for refresh
-          if (onSwipeDown) {
-            onSwipeDown();
-          }
-          api.start({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
-        } else {
-          // Return to center
-          api.start({ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 });
-        }
+    setTimeout(() => {
+      if (isLeftSwipe) {
+        onSwipeLeft();
       } else {
-        // Follow finger during drag with smooth feedback
-        const progress = Math.min(Math.abs(mx) / 150, 1);
-        api.start({
-          x: mx * 0.8, // Slight resistance
-          y: my * 0.3,
-          opacity: Math.max(0.85, 1 - progress * 0.15),
-          scale: Math.max(0.97, 1 - progress * 0.03),
-          rotate: mx / 15, // More subtle rotation
-          immediate: true
-        });
+        onSwipeRight();
       }
+      api.set(RESET_POSITION);
+    }, ANIMATION_DELAY);
+  };
+
+  const handleVerticalSwipe = (my: number) => {
+    if (Math.abs(my) > VERTICAL_SWIPE_THRESHOLD && my > 0 && onSwipeDown) {
+      onSwipeDown();
     }
-  );
+    resetToCenter();
+  };
+
+  const handleDragFeedback = (mx: number, my: number) => {
+    const progress = Math.min(Math.abs(mx) / PROGRESS_DIVISOR, 1);
+    api.start({
+      x: mx * DRAG_RESISTANCE,
+      y: my * VERTICAL_RESISTANCE,
+      opacity: Math.max(0.85, 1 - progress * 0.15),
+      scale: Math.max(0.97, 1 - progress * 0.03),
+      rotate: mx / 15,
+      immediate: true
+    });
+  };
+
+  const bind = useDrag(({ down, movement: [mx, my] }) => {
+    if (disabled) return;
+
+    if (!down) {
+      const shouldSwipe = Math.abs(mx) > SWIPE_THRESHOLD;
+
+      if (shouldSwipe) {
+        const isLeftSwipe = mx < 0;
+
+        if (isAtEdge(isLeftSwipe)) {
+          resetToCenter();
+          return;
+        }
+
+        executeSwipeAnimation(isLeftSwipe);
+      } else {
+        handleVerticalSwipe(my);
+      }
+    } else {
+      handleDragFeedback(mx, my);
+    }
+  });
 
   return {
     bind,

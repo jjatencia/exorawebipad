@@ -12,6 +12,28 @@ interface CardStackProps {
   onRefresh?: () => void;
 }
 
+// Style constants
+const CONTAINER_STYLE = {
+  height: 'calc(100vh - 200px)',
+  maxHeight: '600px'
+};
+
+const CARD_STYLES = {
+  base: "absolute w-full h-full flex justify-center items-center transition-all duration-400 ease-in-out",
+  current: "absolute w-full h-full flex justify-center items-center"
+};
+
+const LAYER_STYLES = {
+  prev: { transform: 'translateY(16px) scale(0.94)', opacity: 0.6, zIndex: 1 },
+  next: { transform: 'translateY(8px) scale(0.97)', opacity: 0.8, zIndex: 2 },
+  current: { touchAction: 'none' as const, zIndex: 3 }
+};
+
+const INDICATORS_STYLE = {
+  zIndex: 4,
+  marginBottom: '8px'
+};
+
 const CardStack: React.FC<CardStackProps> = ({
   appointments,
   currentIndex,
@@ -32,20 +54,10 @@ const CardStack: React.FC<CardStackProps> = ({
     isLast: currentIndex === appointments.length - 1
   });
 
-  
   // Force re-render when currentIndex changes to avoid stuck gestures
   React.useEffect(() => {
     // Reset any stuck gesture states when index changes
     (window as any).currentCardIndex = currentIndex;
-  }, [currentIndex]);
-
-  // Add entrance animation for new cards
-  React.useEffect(() => {
-    // Small delay to ensure smooth entrance
-    const timer = setTimeout(() => {
-      // This effect just ensures the card is ready for interaction
-    }, 100);
-    return () => clearTimeout(timer);
   }, [currentIndex]);
 
 
@@ -61,23 +73,16 @@ const CardStack: React.FC<CardStackProps> = ({
 
 
   return (
-    <div 
+    <div
       className="relative w-full flex items-center justify-center"
-      style={{ 
-        height: 'calc(100vh - 200px)', // Restar espacio del header y footer
-        maxHeight: '600px'
-      }}
+      style={CONTAINER_STYLE}
     >
       {/* Background cards for 3D stack effect */}
       {prevAppointment && (
         <div
           key={`prev-${prevAppointment._id}`}
-          className="absolute w-full h-full flex justify-center items-center transition-all duration-400 ease-in-out"
-          style={{
-            transform: 'translateY(16px) scale(0.94)',
-            opacity: 0.6,
-            zIndex: 1
-          }}
+          className={CARD_STYLES.base}
+          style={LAYER_STYLES.prev}
         >
           <AppointmentCard
             appointment={prevAppointment}
@@ -89,12 +94,8 @@ const CardStack: React.FC<CardStackProps> = ({
       {nextAppointment && (
         <div
           key={`next-${nextAppointment._id}`}
-          className="absolute w-full h-full flex justify-center items-center transition-all duration-400 ease-in-out"
-          style={{
-            transform: 'translateY(8px) scale(0.97)',
-            opacity: 0.8,
-            zIndex: 2
-          }}
+          className={CARD_STYLES.base}
+          style={LAYER_STYLES.next}
         >
           <AppointmentCard
             appointment={nextAppointment}
@@ -107,11 +108,10 @@ const CardStack: React.FC<CardStackProps> = ({
       <animated.div
         key={`swipe-${currentIndex}-${currentAppointment._id}`}
         {...swipeGesture.bind()}
-        className="absolute w-full h-full flex justify-center items-center"
+        className={CARD_STYLES.current}
         style={{
           ...swipeGesture.style,
-          touchAction: 'none',
-          zIndex: 3
+          ...LAYER_STYLES.current
         }}
       >
         <AppointmentCard
@@ -120,18 +120,18 @@ const CardStack: React.FC<CardStackProps> = ({
         />
       </animated.div>
 
-      {/* Visual indicators - outside absolute positioning */}
+      {/* Visual indicators */}
       {appointments.length > 1 && (
-        <div 
+        <div
           className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2"
-          style={{ zIndex: 4, marginBottom: '8px' }}
+          style={INDICATORS_STYLE}
         >
           {appointments.map((_, index) => (
             <div
               key={index}
               className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                index === currentIndex 
-                  ? 'bg-exora-primary' 
+                index === currentIndex
+                  ? 'bg-exora-primary'
                   : 'bg-gray-300'
               }`}
             />
