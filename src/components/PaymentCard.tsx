@@ -82,7 +82,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   return (
     <animated.div
       style={{
-        backgroundColor: '#FDE047', // Amarillo como el botón
+        backgroundColor: '#FCFFA8', // Amarillo personalizado
         borderRadius: '20px',
         boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
         width: '90%',
@@ -105,10 +105,10 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         </button>
         {/* Header */}
         <div className="flex-shrink-0 text-center mb-4 mt-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
+          <h2 className="text-xl font-bold mb-1" style={{ color: '#555BF6' }}>
             {appointment.usuario.nombre}
           </h2>
-          <div className="text-base text-gray-700">
+          <div className="text-base" style={{ color: '#555BF6' }}>
             {new Date(appointment.fecha).toLocaleTimeString('es-ES', {
               hour: '2-digit',
               minute: '2-digit'
@@ -118,7 +118,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
         {/* Service Info */}
         <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
-          <div className="flex items-start space-x-3 text-gray-700">
+          <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
             <ServiceIcon />
             <div className="flex-1">
               <div className="text-base font-medium">
@@ -128,11 +128,11 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
           </div>
 
           {appointment.variantes && appointment.variantes.length > 0 && (
-            <div className="flex items-start space-x-3 text-gray-700">
+            <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
               <VariantIcon />
               <div className="flex-1">
                 <div className="text-base font-medium">Variante:</div>
-                <div className="text-sm mt-1 text-gray-600">
+                <div className="text-sm mt-1" style={{ color: '#555BF6' }}>
                   {appointment.variantes.map(v => v.nombre).join(', ')}
                 </div>
               </div>
@@ -140,16 +140,16 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
           )}
 
           {/* Total */}
-          <div className="bg-white/30 rounded-lg p-3 text-center">
-            <div className="text-base font-medium text-gray-700">Total a cobrar</div>
-            <div className="text-2xl font-bold text-gray-900">
+          <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#FAFAB0' }}>
+            <div className="text-base font-medium" style={{ color: '#555BF6' }}>Total a cobrar</div>
+            <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
               €{appointment.importe.toFixed(2)}
             </div>
           </div>
 
           {/* Payment Methods */}
           <div className="space-y-2">
-            <div className="text-base font-medium text-gray-800">Método de pago:</div>
+            <div className="text-base font-medium" style={{ color: '#555BF6' }}>Método de pago:</div>
             {paymentMethods.map((method) => {
               const IconComponent = method.icon;
               return (
@@ -158,12 +158,15 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                   onClick={() => setSelectedPaymentMethod(method.id)}
                   className={`w-full p-3 rounded-lg border-2 flex items-center space-x-3 transition-all ${
                     selectedPaymentMethod === method.id
-                      ? 'border-white bg-white/40 shadow-md'
-                      : 'border-white/50 bg-white/20 hover:bg-white/30'
+                      ? 'border-white shadow-md'
+                      : 'border-white/50 hover:opacity-80'
                   }`}
+                  style={{
+                    backgroundColor: selectedPaymentMethod === method.id ? '#FAFAB0' : 'rgba(250, 250, 176, 0.5)'
+                  }}
                 >
                   <IconComponent />
-                  <span className="text-base font-medium text-gray-800">{method.name}</span>
+                  <span className="text-base font-medium" style={{ color: '#555BF6' }}>{method.name}</span>
                   {selectedPaymentMethod === method.id && (
                     <div className="ml-auto">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -184,9 +187,14 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
             disabled={!selectedPaymentMethod}
             className={`w-full py-3 rounded-lg font-bold text-base transition-all ${
               selectedPaymentMethod
-                ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'hover:opacity-90 shadow-lg'
+                : 'cursor-not-allowed'
             }`}
+            style={
+              selectedPaymentMethod
+                ? { backgroundColor: '#555BF6', color: 'white' }
+                : { backgroundColor: '#d1d5db', color: '#6b7280' }
+            }
           >
             Completar Pago
           </button>

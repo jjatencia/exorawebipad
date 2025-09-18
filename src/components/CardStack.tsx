@@ -1,5 +1,5 @@
 import React from 'react';
-import { animated } from '@react-spring/web';
+import { animated, useSpring } from '@react-spring/web';
 import { Appointment } from '../types';
 import AppointmentCard from './AppointmentCard';
 import PaymentCard from './PaymentCard';
@@ -30,7 +30,7 @@ const CARD_STYLES = {
 const LAYER_STYLES = {
   prev: { transform: 'translateY(16px) scale(0.94)', opacity: 0.6, zIndex: 1 },
   next: { transform: 'translateY(8px) scale(0.97)', opacity: 0.8, zIndex: 2 },
-  current: { touchAction: 'none' as const, zIndex: 3 }
+  current: { touchAction: 'none' as const, zIndex: 50 }
 };
 
 const INDICATORS_STYLE = {
@@ -59,6 +59,12 @@ const CardStack: React.FC<CardStackProps> = ({
     disabled: appointments.length <= 1 || paymentMode,
     isFirst: currentIndex === 0,
     isLast: currentIndex === appointments.length - 1
+  });
+
+  // Animación flip para el cambio entre tarjeta normal y pago
+  const flipAnimation = useSpring({
+    transform: paymentMode ? 'rotateY(180deg)' : 'rotateY(0deg)',
+    config: { tension: 200, friction: 25 }
   });
 
   // Force re-render when currentIndex changes to avoid stuck gestures
@@ -118,21 +124,43 @@ const CardStack: React.FC<CardStackProps> = ({
         className={CARD_STYLES.current}
         style={{
           ...swipeGesture.style,
-          ...LAYER_STYLES.current
+          ...LAYER_STYLES.current,
+          ...flipAnimation,
+          transformStyle: 'preserve-3d'
         }}
       >
-        {paymentMode ? (
+        {/* Lado frontal - Tarjeta normal */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(0deg)'
+          }}
+        >
+          <AppointmentCard
+            appointment={currentAppointment}
+            isActive={true}
+          />
+        </div>
+
+        {/* Lado trasero - Tarjeta de pago */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)'
+          }}
+        >
           <PaymentCard
             appointment={currentAppointment}
             onCompletePayment={onCompletePayment}
             onCancel={onCancelPayment}
           />
-        ) : (
-          <AppointmentCard
-            appointment={currentAppointment}
-            isActive={true}
-          />
-        )}
+        </div>
       </animated.div>
 
       {/* Visual indicators */}

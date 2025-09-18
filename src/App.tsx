@@ -36,7 +36,7 @@ const App: React.FC = () => {
           reverseOrder={false}
           gutter={8}
           toastOptions={{
-            duration: 4000,
+            duration: 1500,
             style: {
               background: '#fff',
               color: '#333',

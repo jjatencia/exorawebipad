@@ -77,17 +77,8 @@ const Dashboard: React.FC = () => {
 
 
   const handleAdd = () => {
-    // Anotar venta - activar modo pago en la tarjeta actual
-    if (filteredAppointments.length > 0 && filteredAppointments[currentIndex]) {
-      const currentAppointment = filteredAppointments[currentIndex];
-      if (currentAppointment.pagada) {
-        toast.error('Esta cita ya está pagada');
-        return;
-      }
-      setPaymentMode(true);
-    } else {
-      toast.error('No hay citas disponibles para anotar venta');
-    }
+    // Simple toggle del modo pago - sin restricciones
+    setPaymentMode(!paymentMode);
   };
 
   const handleCompletePayment = async (_appointmentId: string, metodoPago: string) => {
@@ -214,8 +205,8 @@ const Dashboard: React.FC = () => {
         canGoForward={currentIndex < filteredAppointments.length - 1 && !paymentMode}
         onPrevious={paymentMode ? undefined : handlePrevious}
         onNext={paymentMode ? undefined : handleNext}
-        onAdd={paymentMode ? undefined : handleAdd}
-        disabled={paymentMode}
+        onAdd={handleAdd}
+        disabled={false}
       />
     </div>
   );
