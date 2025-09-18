@@ -105,6 +105,15 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <div className="p-6 h-full flex flex-col overflow-hidden">
         {/* Top section - Header */}
         <div className="flex-shrink-0">
+          {/* Badge de estado pagada */}
+          {appointment.pagada && (
+            <div className="flex justify-center items-center mb-3">
+              <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                PAGADA
+              </span>
+            </div>
+          )}
+
           {/* Cliente Name */}
           <div className="text-center mb-3">
             <h2 className={`text-3xl font-bold leading-tight ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>
@@ -159,20 +168,17 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             <span className="text-base">{appointment.sucursal.nombre}</span>
           </div>
 
-          <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            <PaymentIcon />
-            <span className="text-base">
-              Estado: <span className={
-                isDisabled
-                  ? 'text-gray-400 font-medium'
-                  : appointment.pagada
-                    ? 'text-green-600 font-medium'
-                    : 'text-orange-600 font-medium'
-              }>
-                {appointment.pagada ? 'Pagada' : 'Pendiente'}
+          {/* Solo mostrar estado si no está pagada (para evitar duplicar info) */}
+          {!appointment.pagada && (
+            <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+              <PaymentIcon />
+              <span className="text-base">
+                Estado: <span className="text-orange-600 font-medium">
+                  Pendiente
+                </span>
               </span>
-            </span>
-          </div>
+            </div>
+          )}
 
           {/* Promociones */}
           <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
