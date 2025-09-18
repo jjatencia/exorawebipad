@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#555BF6"/>
+
+  <!-- White background for text -->
+  <circle cx="256" cy="256" r="200" fill="white"/>
+
+  <!-- Main text E -->
+  <text x="256" y="320" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="#555BF6" text-anchor="middle">E</text>
+
+  <!-- Small text -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="32" font-weight="normal" fill="#555BF6" text-anchor="middle">BARBERÍA</text>
+</svg>

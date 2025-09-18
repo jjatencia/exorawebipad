@@ -15,27 +15,37 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
+      includeAssets: ['favicon.ico', 'icon-pwa.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Exora Barbería',
+        name: 'Exora Barbería - Gestión de Citas',
         short_name: 'Exora',
-        description: 'Gestión de citas para profesionales de barbería',
+        description: 'Aplicación profesional para gestión de citas en barbería',
         theme_color: '#555BF6',
-        background_color: '#f8f8f8',
+        background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
         scope: '/',
-        start_url: '/',
+        start_url: '/?utm_source=pwa',
+        lang: 'es',
+        categories: ['business', 'productivity'],
         icons: [
           {
-            src: 'icon-192.png',
+            src: 'icon-pwa.svg',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/svg+xml',
+            purpose: 'any'
           },
           {
-            src: 'icon-512.png',
+            src: 'icon-pwa.svg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
+            src: 'icon-pwa.svg',
+            sizes: '192x192 512x512',
+            type: 'image/svg+xml',
+            purpose: 'maskable'
           }
         ]
       },
