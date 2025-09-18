@@ -1,4 +1,5 @@
 import { Appointment } from '../types';
+import { STORAGE_KEYS } from '../utils/constants';
 
 export interface VentaData {
   usuario: string;
@@ -25,11 +26,17 @@ export interface VentaData {
 }
 
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
-  const token = localStorage.getItem('authToken');
+  // Intenta obtener el token de ambas claves posibles
+  let token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  if (!token) {
+    token = localStorage.getItem('exora_token');
+  }
 
   if (!token) {
     throw new Error('No hay token de autenticación');
   }
+
+  console.log('🔑 Token encontrado:', token ? 'Sí' : 'No');
 
   // Preparar los datos para la API
   const ventaData: VentaData = {
@@ -56,18 +63,32 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     fechaVenta: new Date().toISOString()
   };
 
+  console.log('📤 Enviando venta a API:', {
+    url: 'https://api.exora.app/api/ventas',
+    method: 'POST',
+    hasToken: !!token,
+    appointmentId: appointment._id
+  });
+
   const response = await fetch('https://api.exora.app/api/ventas', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'x-token': token
     },
     body: JSON.stringify(ventaData)
   });
 
+  console.log('📡 Respuesta de la API:', {
+    status: response.status,
+    statusText: response.statusText,
+    ok: response.ok
+  });
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    console.error('❌ Error de la API:', errorData);
+    throw new Error(errorData.message || errorData.msg || `Error ${response.status}: ${response.statusText}`);
   }
 
   return await response.json();
