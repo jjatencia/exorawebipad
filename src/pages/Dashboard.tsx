@@ -77,8 +77,23 @@ const Dashboard: React.FC = () => {
 
 
   const handleAdd = () => {
-    // Simple toggle del modo pago - sin restricciones
-    setPaymentMode(!paymentMode);
+    // Si ya está en modo pago, permitir salir siempre
+    if (paymentMode) {
+      setPaymentMode(false);
+      return;
+    }
+
+    // Verificar si hay citas disponibles y si no está pagada
+    if (filteredAppointments.length > 0 && filteredAppointments[currentIndex]) {
+      const currentAppointment = filteredAppointments[currentIndex];
+      if (currentAppointment.pagada) {
+        toast.error('Esta cita ya está pagada');
+        return;
+      }
+      setPaymentMode(true);
+    } else {
+      toast.error('No hay citas disponibles');
+    }
   };
 
   const handleCompletePayment = async (_appointmentId: string, metodoPago: string) => {
