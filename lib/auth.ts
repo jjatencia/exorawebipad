@@ -20,7 +20,11 @@ export class AuthService {
 
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response = await fetch(`${this.API_BASE}/auth/ext-login`, {
+      const loginUrl = `${this.API_BASE}/auth/ext-login`;
+      console.log('🔐 Attempting login with:', { email: credentials.email });
+      console.log('🌐 Calling endpoint:', loginUrl);
+
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,7 +32,29 @@ export class AuthService {
         body: JSON.stringify(credentials),
       });
 
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error('❌ HTTP Error:', response.status, response.statusText);
+
+        // Try to get error message from response
+        try {
+          const errorData = await response.json();
+          console.log('❌ Error data:', errorData);
+          return {
+            ok: false,
+            msg: errorData.msg || errorData.message || `Error HTTP ${response.status}`
+          };
+        } catch {
+          return {
+            ok: false,
+            msg: `Error HTTP ${response.status}: ${response.statusText}`
+          };
+        }
+      }
+
       const data = await response.json();
+      console.log('✅ Login response:', { ok: data.ok, hasToken: !!data.token, msg: data.msg });
 
       if (data.ok && data.token) {
         this.setToken(data.token);
@@ -39,17 +65,17 @@ export class AuthService {
         ok: data.ok,
         token: data.token,
         user: data.ok ? {
-          _id: data.uid,
-          nombre: data.nombre,
-          email: data.email
+          _id: data.uid || data.id,
+          nombre: data.nombre || data.name || credentials.email.split('@')[0],
+          email: data.email || credentials.email
         } : undefined,
-        msg: data.msg
+        msg: data.msg || data.message
       };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('💥 Network/Parse error:', error);
       return {
         ok: false,
-        msg: 'Error de conexión'
+        msg: 'Error de conexión. Verifica tu internet.'
       };
     }
   }

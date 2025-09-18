@@ -84,38 +84,50 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-DtKoP28z.css",
+    "url": "assets/index-CUAkJ9vs.js",
     "revision": null
   }, {
-    "url": "assets/index-x-yW7ufu.js",
+    "url": "assets/index-ZJztAmtr.css",
     "revision": null
   }, {
     "url": "Captura de pantalla 2025-09-16 a las 23.43.22.png",
     "revision": "190b69be05f091997440b5e191d06f5b"
   }, {
+    "url": "favicon.ico",
+    "revision": "6cd697262c627b110ff82fd806ae9895"
+  }, {
     "url": "icon-192.png",
-    "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
+    "revision": "da0dd28cdd6661650bcdc0a6841609db"
   }, {
     "url": "icon-512.png",
-    "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
+    "revision": "675d51f54f725d0c522485b4ee280a0d"
+  }, {
+    "url": "icon-pwa.svg",
+    "revision": "3c1b33fe7ef6cfe41aa589d62d06c7e9"
   }, {
     "url": "icon.svg",
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "ed16600a0cf5c28aea41bb33bc089346"
+    "revision": "be1ec51d4bb3cdbfc2406025e331f201"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"
   }, {
+    "url": "favicon.ico",
+    "revision": "6cd697262c627b110ff82fd806ae9895"
+  }, {
     "url": "icon-192.png",
-    "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
+    "revision": "da0dd28cdd6661650bcdc0a6841609db"
   }, {
     "url": "icon-512.png",
-    "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
+    "revision": "675d51f54f725d0c522485b4ee280a0d"
+  }, {
+    "url": "icon-pwa.svg",
+    "revision": "3c1b33fe7ef6cfe41aa589d62d06c7e9"
   }, {
     "url": "manifest.webmanifest",
-    "revision": "e9b6f6623da5a367646325361ed9d093"
+    "revision": "10a9c61f3af4a10bc63ae99181ed02dc"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html")));

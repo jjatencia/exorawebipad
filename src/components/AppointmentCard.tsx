@@ -8,6 +8,7 @@ interface AppointmentCardProps {
   style?: any;
   isActive?: boolean;
   onClick?: () => void;
+  onActivatePayment?: () => void;
 }
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({

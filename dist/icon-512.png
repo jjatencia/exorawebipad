@@ -1,7 +1,6 @@
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="24" fill="#555BF6"/>
-  <path d="M96 48C96 43.5817 99.5817 40 104 40H136C140.418 40 144 43.5817 144 48V80C144 84.4183 140.418 88 136 88H104C99.5817 88 96 84.4183 96 80V48Z" fill="white"/>
-  <path d="M48 112C48 107.582 51.5817 104 56 104H88C92.4183 104 96 107.582 96 112V144C96 148.418 92.4183 152 88 152H56C51.5817 152 48 148.418 48 144V112Z" fill="white"/>
-  <path d="M104 112C104 107.582 107.582 104 112 104H136C140.418 104 144 107.582 144 112V144C144 148.418 140.418 152 136 152H112C107.582 152 104 148.418 104 144V112Z" fill="white"/>
-  <circle cx="72" cy="72" r="16" fill="#FCFFA8"/>
-</svg>
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="256" cy="256" r="256" fill="#555BF6"/>
+    <circle cx="256" cy="256" r="204.8" fill="white"/>
+    <text x="256" y="320" text-anchor="middle" font-family="Arial, sans-serif"
+          font-size="170.66666666666666" font-weight="bold" fill="#555BF6">E</text>
+  </svg>

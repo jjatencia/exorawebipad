@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['x-token'] = token;
     }
     return config;
   },
@@ -44,13 +44,17 @@ apiClient.interceptors.response.use(
 );
 
 export const apiService = {
-  async getAppointments(date: string, professionalId?: string): Promise<Appointment[]> {
-    const params: any = { date };
-    if (professionalId) {
-      params.professional_id = professionalId;
+  async getAppointments(date: string, empresa: string, professional?: string): Promise<Appointment[]> {
+    const requestBody: any = {
+      fecha: date,
+      empresa: empresa
+    };
+
+    if (professional) {
+      requestBody.profesional = professional;
     }
-    
-    const response = await apiClient.get('/appointments', { params });
+
+    const response = await apiClient.post('/citas/dia/profesional', requestBody);
     return response.data;
   }
 };

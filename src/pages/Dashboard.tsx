@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
@@ -8,9 +8,11 @@ import DateSelector from '../components/DateSelector';
 import BottomNavigation from '../components/BottomNavigation';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatDateForAPILocal } from '../utils/helpers';
+import { createVenta } from '../services/ventasService';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [paymentMode, setPaymentMode] = useState(false);
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
   const {
     filteredAppointments,
@@ -75,7 +77,47 @@ const Dashboard: React.FC = () => {
 
 
   const handleAdd = () => {
-    toast.success('Funcionalidad de agregar cita no implementada');
+    // Anotar venta - activar modo pago en la tarjeta actual
+    if (filteredAppointments.length > 0 && filteredAppointments[currentIndex]) {
+      const currentAppointment = filteredAppointments[currentIndex];
+      if (currentAppointment.pagada) {
+        toast.error('Esta cita ya está pagada');
+        return;
+      }
+      setPaymentMode(true);
+    } else {
+      toast.error('No hay citas disponibles para anotar venta');
+    }
+  };
+
+  const handleCompletePayment = async (_appointmentId: string, metodoPago: string) => {
+    try {
+      const currentAppointment = filteredAppointments[currentIndex];
+      if (!currentAppointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      toast.loading('Procesando pago...');
+
+      await createVenta(currentAppointment, metodoPago);
+
+      toast.dismiss();
+      toast.success('Pago completado exitosamente');
+      setPaymentMode(false);
+
+      // Refrescar las citas para actualizar el estado
+      fetchAppointments(currentDate);
+    } catch (error: any) {
+      toast.dismiss();
+      console.error('Error al procesar el pago:', error);
+      toast.error(error.message || 'Error al procesar el pago');
+    }
+  };
+
+  const handleCancelPayment = () => {
+    setPaymentMode(false);
+    toast('Pago cancelado');
   };
 
   const handleLogout = () => {
@@ -158,6 +200,9 @@ const Dashboard: React.FC = () => {
               onNext={handleNext}
               onPrevious={handlePrevious}
               onRefresh={handleRefresh}
+              paymentMode={paymentMode}
+              onCompletePayment={handleCompletePayment}
+              onCancelPayment={handleCancelPayment}
             />
           </div>
         )}
@@ -165,11 +210,12 @@ const Dashboard: React.FC = () => {
 
       {/* Bottom Navigation */}
       <BottomNavigation
-        canGoBack={currentIndex > 0}
-        canGoForward={currentIndex < filteredAppointments.length - 1}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        onAdd={handleAdd}
+        canGoBack={currentIndex > 0 && !paymentMode}
+        canGoForward={currentIndex < filteredAppointments.length - 1 && !paymentMode}
+        onPrevious={paymentMode ? undefined : handlePrevious}
+        onNext={paymentMode ? undefined : handleNext}
+        onAdd={paymentMode ? undefined : handleAdd}
+        disabled={paymentMode}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import AppointmentCard from './AppointmentCard';
+import PaymentCard from './PaymentCard';
 import { useSwipeGestureSimple } from '../hooks/useSwipeGestureSimple';
 
 interface CardStackProps {
@@ -10,6 +11,9 @@ interface CardStackProps {
   onNext: () => void;
   onPrevious: () => void;
   onRefresh?: () => void;
+  paymentMode?: boolean;
+  onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
+  onCancelPayment?: () => void;
 }
 
 // Style constants
@@ -39,7 +43,10 @@ const CardStack: React.FC<CardStackProps> = ({
   currentIndex,
   onNext,
   onPrevious,
-  onRefresh
+  onRefresh,
+  paymentMode = false,
+  onCompletePayment,
+  onCancelPayment
 }) => {
   const currentAppointment = appointments[currentIndex];
   const nextAppointment = appointments[currentIndex + 1];
@@ -49,7 +56,7 @@ const CardStack: React.FC<CardStackProps> = ({
     onSwipeLeft: onNext,
     onSwipeRight: onPrevious,
     onSwipeDown: onRefresh,
-    disabled: appointments.length <= 1,
+    disabled: appointments.length <= 1 || paymentMode,
     isFirst: currentIndex === 0,
     isLast: currentIndex === appointments.length - 1
   });
@@ -114,10 +121,18 @@ const CardStack: React.FC<CardStackProps> = ({
           ...LAYER_STYLES.current
         }}
       >
-        <AppointmentCard
-          appointment={currentAppointment}
-          isActive={true}
-        />
+        {paymentMode ? (
+          <PaymentCard
+            appointment={currentAppointment}
+            onCompletePayment={onCompletePayment}
+            onCancel={onCancelPayment}
+          />
+        ) : (
+          <AppointmentCard
+            appointment={currentAppointment}
+            isActive={true}
+          />
+        )}
       </animated.div>
 
       {/* Visual indicators */}

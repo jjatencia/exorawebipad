@@ -3,9 +3,10 @@ import React from 'react';
 interface BottomNavigationProps {
   canGoBack: boolean;
   canGoForward: boolean;
-  onPrevious: () => void;
-  onNext: () => void;
-  onAdd: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  onAdd?: () => void;
+  disabled?: boolean;
 }
 
 const BottomNavigation: React.FC<BottomNavigationProps> = ({
@@ -13,7 +14,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   canGoForward,
   onPrevious,
   onNext,
-  onAdd
+  onAdd,
+  disabled = false
 }) => {
   const ChevronLeftIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -43,12 +45,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* Previous Button */}
         <button
           onClick={onPrevious}
-          disabled={!canGoBack}
+          disabled={!canGoBack || disabled}
           className={`
             flex items-center justify-center w-12 h-12 rounded-full
             transition-all duration-200
-            ${canGoBack 
-              ? 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40' 
+            ${canGoBack && !disabled
+              ? 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40'
               : 'bg-white/10 text-white/40 cursor-not-allowed'
             }
           `}
@@ -59,11 +61,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* Add Button (FAB) */}
         <button
           onClick={onAdd}
-          className="
+          disabled={disabled}
+          className={`
             flex items-center justify-center w-14 h-14 rounded-full
             shadow-lg transition-all duration-200
-            hover:scale-105 active:scale-95
-          "
+            ${disabled
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:scale-105 active:scale-95'
+            }
+          `}
           style={{ backgroundColor: 'var(--exora-light-yellow)' }}
         >
           <PlusIcon />
@@ -72,12 +78,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
         {/* Next Button */}
         <button
           onClick={onNext}
-          disabled={!canGoForward}
+          disabled={!canGoForward || disabled}
           className={`
             flex items-center justify-center w-12 h-12 rounded-full
             transition-all duration-200
-            ${canGoForward 
-              ? 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40' 
+            ${canGoForward && !disabled
+              ? 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40'
               : 'bg-white/10 text-white/40 cursor-not-allowed'
             }
           `}

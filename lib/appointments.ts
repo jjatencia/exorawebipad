@@ -110,7 +110,12 @@ export class AppointmentsService {
     }
 
     try {
-      const response = await fetch(`${this.API_BASE}/citas/dia/profesional`, {
+      const appointmentsUrl = `${this.API_BASE}/citas/dia/profesional`;
+      console.log('📅 Fetching appointments from:', appointmentsUrl);
+      console.log('📅 Params:', params);
+      console.log('📅 Using token:', token ? 'Yes' : 'No');
+
+      const response = await fetch(appointmentsUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Iconos PNG</title>
+</head>
+<body>
+    <canvas id="canvas192" width="192" height="192" style="border:1px solid black;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="border:1px solid black;"></canvas>
+
+    <script>
+        // Crear icono 192x192
+        const canvas192 = document.getElementById('canvas192');
+        const ctx192 = canvas192.getContext('2d');
+
+        // Fondo circular azul
+        ctx192.fillStyle = '#555BF6';
+        ctx192.beginPath();
+        ctx192.arc(96, 96, 96, 0, 2 * Math.PI);
+        ctx192.fill();
+
+        // Círculo blanco interior
+        ctx192.fillStyle = 'white';
+        ctx192.beginPath();
+        ctx192.arc(96, 96, 75, 0, 2 * Math.PI);
+        ctx192.fill();
+
+        // Texto E
+        ctx192.fillStyle = '#555BF6';
+        ctx192.font = 'bold 80px Arial';
+        ctx192.textAlign = 'center';
+        ctx192.textBaseline = 'middle';
+        ctx192.fillText('E', 96, 96);
+
+        // Crear icono 512x512
+        const canvas512 = document.getElementById('canvas512');
+        const ctx512 = canvas512.getContext('2d');
+
+        // Fondo circular azul
+        ctx512.fillStyle = '#555BF6';
+        ctx512.beginPath();
+        ctx512.arc(256, 256, 256, 0, 2 * Math.PI);
+        ctx512.fill();
+
+        // Círculo blanco interior
+        ctx512.fillStyle = 'white';
+        ctx512.beginPath();
+        ctx512.arc(256, 256, 200, 0, 2 * Math.PI);
+        ctx512.fill();
+
+        // Texto E
+        ctx512.fillStyle = '#555BF6';
+        ctx512.font = 'bold 200px Arial';
+        ctx512.textAlign = 'center';
+        ctx512.textBaseline = 'middle';
+        ctx512.fillText('E', 256, 256);
+
+        // Descargar iconos
+        setTimeout(() => {
+            // Descargar 192x192
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192.png';
+            link192.href = canvas192.toDataURL();
+            link192.click();
+
+            // Descargar 512x512
+            setTimeout(() => {
+                const link512 = document.createElement('a');
+                link512.download = 'icon-512.png';
+                link512.href = canvas512.toDataURL();
+                link512.click();
+            }, 1000);
+        }, 500);
+    </script>
+</body>
+</html>
