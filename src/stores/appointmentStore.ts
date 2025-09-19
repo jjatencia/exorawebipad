@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AppointmentState, Appointment } from '../types';
-import { AppointmentsService } from '../../lib/appointments';
+import { AppointmentsService } from '../services/appointmentsService';
 import { formatDateForAPILocal } from '../utils/helpers';
 
 const filterAndSortAppointments = (appointments: Appointment[]) => {

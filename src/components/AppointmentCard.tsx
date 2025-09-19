@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import { isAppointmentDisabled } from '../utils/helpers';
+import {
+  CommentIcon,
+  DiscountIcon,
+  LocationIcon,
+  PaymentIcon,
+  PhoneIcon,
+  ServiceIcon,
+  VariantIcon
+} from './icons';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -18,69 +27,46 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   onClick
 }) => {
   const isDisabled = isAppointmentDisabled(appointment);
-
-  // Icono Teléfono (teléfono clásico)
-  const PhoneIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 16.92V19a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h2.09a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9a16 16 0 006.92 6.92l1.27-.36a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-    </svg>
+  const appointmentDate = useMemo(() => new Date(appointment.fecha), [appointment.fecha]);
+  const formattedTime = useMemo(
+    () =>
+      appointmentDate.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    [appointmentDate]
+  );
+  const formattedDate = useMemo(
+    () =>
+      appointmentDate.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+    [appointmentDate]
   );
 
-  // Icono Servicio (bolsa/shopping bag)
-  const ServiceIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <path d="M16 10a4 4 0 01-8 0"/>
-    </svg>
-  );
+  const promotionLabels = useMemo(() => {
+    if (!appointment.promocion || appointment.promocion.length === 0) {
+      return [] as Array<{ key: string; label: string }>;
+    }
 
-  // Icono Variante (flechas cruzadas curvas - como intercambio)
-  const VariantIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      {/* Flecha curva superior */}
-      <path d="M3 7h13l-4-4"/>
-      <path d="M21 7l-4 4"/>
+    return appointment.promocion.map((promocionId: string, index: number) => {
+      let label = 'Promoción especial';
 
-      {/* Flecha curva inferior */}
-      <path d="M21 17H8l4 4"/>
-      <path d="M3 17l4-4"/>
-    </svg>
-  );
+      if (promocionId === '66945b4a5706bb70baa15bc0') {
+        label = 'Aleatorio o barbero Junior';
+      } else if (promocionId === '66aff43347f5e3f837f20ad7') {
+        label = 'Mañanas';
+      }
 
-  // Icono Ubicación (pin de localización)
-  const LocationIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-      <circle cx="12" cy="10" r="3"/>
-    </svg>
-  );
-
-
-  // Icono Descuentos (porcentaje)
-  const DiscountIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="19" y1="5" x2="5" y2="19"/>
-      <circle cx="6.5" cy="6.5" r="2.5"/>
-      <circle cx="17.5" cy="17.5" r="2.5"/>
-    </svg>
-  );
-
-  // Icono Estado/Pago (tarjeta de crédito)
-  const PaymentIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
-  );
-
-  // Icono Comentarios (mensaje)
-  const CommentIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-    </svg>
-  );
-
+      return {
+        key: promocionId || `promo-${index}`,
+        label
+      };
+    });
+  }, [appointment.promocion]);
 
   return (
     <animated.div
@@ -128,10 +114,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               className="text-5xl font-bold leading-none"
               style={{ color: isDisabled ? '#9ca3af' : 'var(--exora-primary)' }}
             >
-              {new Date(appointment.fecha).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {formattedTime}
             </div>
           </div>
         </div>
@@ -139,12 +122,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {/* Middle section - Information */}
         <div className="flex-1 space-y-4 min-h-0">
           <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            <PhoneIcon />
+            <PhoneIcon size={16} />
             <span className="text-base">{appointment.usuario.telefono}</span>
           </div>
 
           <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            <ServiceIcon />
+            <ServiceIcon size={16} />
             <div className="flex-1">
               <div className="text-base font-medium">
                 {appointment.servicios[0]?.nombre || 'Servicio no especificado'}
@@ -154,7 +137,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
           {appointment.variantes && appointment.variantes.length > 0 && (
             <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-              <VariantIcon />
+              <VariantIcon size={16} />
               <div className="flex-1">
                 <div className="text-base font-medium">Variante:</div>
                 <div className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -165,14 +148,14 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           )}
 
           <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            <LocationIcon />
+            <LocationIcon size={16} />
             <span className="text-base">{appointment.sucursal.nombre}</span>
           </div>
 
           {/* Solo mostrar estado si no está pagada (para evitar duplicar info) */}
           {!appointment.pagada && (
             <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-              <PaymentIcon />
+              <PaymentIcon size={16} />
               <span className="text-base">
                 Estado: <span className="text-orange-600 font-medium">
                   Pendiente
@@ -183,27 +166,19 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
           {/* Promociones */}
           <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-            <DiscountIcon />
+            <DiscountIcon size={16} />
             <div className="flex-1">
               <div className="text-base font-medium">Promociones:</div>
               {appointment.promocion.length > 0 ? (
                 <div className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {appointment.promocion.map((promocionId: string, index: number) => {
-                    // Mapeo temporal de IDs a nombres
-                    let promocionNombre = "Promoción especial";
-
-                    if (promocionId === "66945b4a5706bb70baa15bc0") {
-                      promocionNombre = "Aleatorio o barbero Junior";
-                    } else if (promocionId === "66aff43347f5e3f837f20ad7") {
-                      promocionNombre = "Mañanas";
-                    }
-
-                    return (
-                      <span key={promocionId || index} className="bg-green-50 text-green-700 px-2 py-1 rounded-md inline-block mr-1 mb-1">
-                        {promocionNombre}
-                      </span>
-                    );
-                  })}
+              {promotionLabels.map(({ key, label }) => (
+                <span
+                  key={key}
+                  className="bg-green-50 text-green-700 px-2 py-1 rounded-md inline-block mr-1 mb-1"
+                >
+                  {label}
+                </span>
+              ))}
                 </div>
               ) : (
                 <div className="text-sm text-gray-600 mt-1">No</div>
@@ -214,7 +189,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           {appointment.comentarios && appointment.comentarios.length > 0 && (
             <div className="flex items-start space-x-3 text-gray-700 pt-3 border-t border-gray-200 mt-4">
               <div className="flex-shrink-0">
-                <CommentIcon />
+                <CommentIcon size={16} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800 mb-2">Comentarios:</div>
@@ -231,7 +206,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           {appointment.usuario.comentarios && appointment.usuario.comentarios.length > 0 && (
             <div className="flex items-start space-x-3 text-gray-700 pt-3 border-t border-gray-200 mt-4">
               <div className="flex-shrink-0">
-                <CommentIcon />
+                <CommentIcon size={16} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800 mb-2">Comentarios del cliente:</div>
@@ -249,12 +224,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {/* Bottom section - Date */}
         <div className="flex-shrink-0 pt-3 border-t border-gray-100 text-center">
           <div className="text-sm text-gray-500">
-            {new Date(appointment.fecha).toLocaleDateString('es-ES', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+            {formattedDate}
           </div>
         </div>
       </div>

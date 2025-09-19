@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthService } from '../../lib/auth';
+import { AuthService } from '../services/authService';
 
 interface LoginCredentials {
   email: string;

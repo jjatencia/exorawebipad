@@ -84,10 +84,10 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-CUAkJ9vs.js",
+    "url": "assets/index-BJ8l4i06.css",
     "revision": null
   }, {
-    "url": "assets/index-ZJztAmtr.css",
+    "url": "assets/index-D5KlRhO0.js",
     "revision": null
   }, {
     "url": "Captura de pantalla 2025-09-16 a las 23.43.22.png",
@@ -109,7 +109,7 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "be1ec51d4bb3cdbfc2406025e331f201"
+    "revision": "3d4e60044780b750966cf51f956a186b"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { formatDate, formatDateForAPILocal } from '../utils/helpers';
+import { ChevronDownIcon } from './icons';
 
 interface DateSelectorProps {
   selectedDate: string;
@@ -12,22 +13,8 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  const currentDate = new Date(selectedDate + 'T00:00:00');
-  const displayDate = formatDate(currentDate);
-
-  const ChevronDownIcon = () => (
-    <svg 
-      width="20" 
-      height="20" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2"
-      className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-    >
-      <polyline points="6,9 12,15 18,9"></polyline>
-    </svg>
-  );
+  const currentDate = useMemo(() => new Date(selectedDate + 'T00:00:00'), [selectedDate]);
+  const displayDate = useMemo(() => formatDate(currentDate), [currentDate]);
 
   const handleDateSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = event.target.value;
@@ -35,7 +22,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     setIsOpen(false);
   };
 
-  const getQuickDates = () => {
+  const quickDates = useMemo(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -47,7 +34,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
       { label: 'Mañana', date: formatDateForAPILocal(tomorrow) },
       { label: 'Pasado mañana', date: formatDateForAPILocal(dayAfterTomorrow) }
     ];
-  };
+  }, []);
 
   return (
     <div className="relative">
@@ -56,7 +43,10 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
       >
         <span className="font-medium text-gray-900">{displayDate}</span>
-        <ChevronDownIcon />
+        <ChevronDownIcon
+          size={20}
+          className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {isOpen && (
@@ -74,7 +64,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
               <div className="mb-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Acceso rápido</h3>
                 <div className="space-y-1">
-                  {getQuickDates().map((quickDate) => (
+                  {quickDates.map((quickDate) => (
                     <button
                       key={quickDate.date}
                       onClick={() => {

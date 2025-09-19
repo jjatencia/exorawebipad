@@ -1,5 +1,6 @@
 import { Appointment } from '../types';
-import { STORAGE_KEYS } from '../utils/constants';
+import { apiClient } from './api';
+import { AuthService } from './authService';
 
 export interface VentaData {
   usuario: string;
@@ -26,17 +27,11 @@ export interface VentaData {
 }
 
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
-  // Intenta obtener el token de ambas claves posibles
-  let token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  if (!token) {
-    token = localStorage.getItem('exora_token');
-  }
+  const token = AuthService.getToken();
 
   if (!token) {
     throw new Error('No hay token de autenticación');
   }
-
-  console.log('🔑 Token encontrado:', token ? 'Sí' : 'No');
 
   // Preparar los datos como los espera la API (sin estructura envuelta)
   const ventaData: any = {
@@ -80,42 +75,16 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     creacion: new Date().toISOString(),
     modificacion: new Date().toISOString()
   };
+  try {
+    const response = await apiClient.post('/ventas', ventaData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
-  console.log('📤 Enviando venta a API:', {
-    url: 'https://api.exora.app/api/ventas',
-    method: 'POST',
-    hasToken: !!token,
-    appointmentId: appointment._id
-  });
-
-  console.log('📦 Datos que se envían:', JSON.stringify(ventaData, null, 2));
-
-  const response = await fetch('https://api.exora.app/api/ventas', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-token': token
-    },
-    body: JSON.stringify(ventaData)
-  });
-
-  console.log('📡 Respuesta de la API:', {
-    status: response.status,
-    statusText: response.statusText,
-    ok: response.ok
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error('❌ Error de la API:', errorData);
-
-    // Mostrar errores específicos si existen
-    if (errorData.errors) {
-      console.error('📋 Errores específicos:', errorData.errors);
-    }
-
-    throw new Error(errorData.message || errorData.msg || `Error ${response.status}: ${response.statusText}`);
+    return response.data;
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'Error al registrar la venta';
+    throw new Error(message);
   }
-
-  return await response.json();
 };

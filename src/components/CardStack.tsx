@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { animated, useSpring } from '@react-spring/web';
 import { Appointment } from '../types';
 import AppointmentCard from './AppointmentCard';
@@ -48,14 +48,23 @@ const CardStack: React.FC<CardStackProps> = ({
   onCompletePayment,
   onCancelPayment
 }) => {
-  const currentAppointment = appointments[currentIndex];
-  const nextAppointment = appointments[currentIndex + 1];
-  const prevAppointment = appointments[currentIndex - 1];
+  const currentAppointment = useMemo(
+    () => appointments[currentIndex],
+    [appointments, currentIndex]
+  );
+  const nextAppointment = useMemo(
+    () => appointments[currentIndex + 1],
+    [appointments, currentIndex]
+  );
+  const prevAppointment = useMemo(
+    () => appointments[currentIndex - 1],
+    [appointments, currentIndex]
+  );
 
   const swipeGesture = useSwipeGestureSimple({
     onSwipeLeft: onNext,
     onSwipeRight: onPrevious,
-    onSwipeDown: onRefresh,
+    onSwipeDown: paymentMode ? undefined : onRefresh,
     disabled: appointments.length <= 1 || paymentMode,
     isFirst: currentIndex === 0,
     isLast: currentIndex === appointments.length - 1

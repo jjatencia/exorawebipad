@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuthStore } from '../stores/authStore';
@@ -20,48 +20,64 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate, checkAuth]);
+  }, [isAuthenticated, navigate]);
 
-  const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+  const handleEmailChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  }, []);
 
-    try {
-      loginSchema.parse({ email, password });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach((err) => {
-          if (err.path[0] === 'email') {
-            newErrors.email = err.message;
-          } else if (err.path[0] === 'password') {
-            newErrors.password = err.message;
-          }
-        });
-      }
+  const handlePasswordChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+  }, []);
+
+  const validateForm = useCallback((): boolean => {
+    const result = loginSchema.safeParse({ email, password });
+
+    if (result.success) {
+      setErrors({});
+      return true;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const newErrors: { email?: string; password?: string } = {};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    result.error.errors.forEach((err) => {
+      if (err.path[0] === 'email') {
+        newErrors.email = err.message;
+      }
+
+      if (err.path[0] === 'password') {
+        newErrors.password = err.message;
+      }
+    });
+
+    setErrors(newErrors);
+    return false;
+  }, [email, password]);
+
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (error) {
-      // Error is handled by the store and toast
+      // Error handled via toast inside store
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, password, login, navigate, validateForm]);
+
+  const isSubmitDisabled = useMemo(() => isLoading, [isLoading]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--exora-background)' }}>
@@ -84,7 +100,7 @@ const Login: React.FC = () => {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors ${
                 errors.email
                   ? 'border-red-500 focus:ring-red-500'
@@ -106,14 +122,14 @@ const Login: React.FC = () => {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors ${
                 errors.password
                   ? 'border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-exora-primary focus:border-transparent'
               }`}
               placeholder="••••••••"
-              disabled={isLoading}
+              disabled={isSubmitDisabled}
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -122,7 +138,7 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isSubmitDisabled}
             className="w-full py-3 px-4 rounded-lg text-white font-semibold text-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             style={{ backgroundColor: 'var(--exora-primary)' }}
           >

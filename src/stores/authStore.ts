@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AuthState, User } from '../types';
 import { STORAGE_KEYS } from '../utils/constants';
-import { AuthService } from '../../lib/auth';
+import { AuthService } from '../services/authService';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -14,17 +14,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await AuthService.login({ email, password });
 
       if (response.ok && response.token && response.user) {
-        // Store in localStorage
+        const normalizedUser: User = {
+          id: response.user._id,
+          name: response.user.nombre,
+          email: response.user.email,
+          role: 'profesional'
+        };
+
+        // Store session in localStorage
         localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
-        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.user));
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
 
         set({
-          user: {
-            id: response.user._id,
-            name: response.user.nombre,
-            email: response.user.email,
-            role: 'profesional'
-          },
+          user: normalizedUser,
           token: response.token,
           isAuthenticated: true
         });
@@ -61,16 +63,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (token && userData) {
       try {
         const user: User = JSON.parse(userData);
-        set({
-          user,
-          token,
-          isAuthenticated: true
-        });
+
+        if (user?.id && user?.email) {
+          set({
+            user,
+            token,
+            isAuthenticated: true
+          });
+          return;
+        }
       } catch (error) {
         // Invalid stored data, clear it
-        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
       }
     }
+
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }
 }));
