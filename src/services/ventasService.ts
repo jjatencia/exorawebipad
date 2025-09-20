@@ -1,6 +1,6 @@
 import { Appointment } from '../types';
 import { apiClient } from './api';
-import { AuthService } from './authService';
+import { STORAGE_KEYS } from '../utils/constants';
 
 export interface VentaData {
   usuario: string;
@@ -27,13 +27,14 @@ export interface VentaData {
 }
 
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
-  const token = AuthService.getToken();
+  // Usar la misma lógica que el apiClient para obtener el token
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
   if (!token) {
     throw new Error('No hay token de autenticación');
   }
 
-  // Preparar los datos como los espera la API (sin estructura envuelta)
+  // Preparar los datos como los espera la API (objetos completos)
   const ventaData: any = {
     usuario: {
       _id: appointment.usuario._id,
@@ -54,10 +55,7 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     },
     fechaCita: appointment.fecha,
     importe: appointment.importe,
-    promocion: appointment.promocion.map((promocionId: string) => ({
-      _id: promocionId,
-      titulo: "Aleatorio o Barbero Junior" // TODO: mapear títulos reales
-    })),
+    promocion: appointment.promocion,
     servicios: appointment.servicios.map(servicio => ({
       _id: servicio._id,
       nombre: servicio.nombre,
@@ -75,15 +73,31 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     creacion: new Date().toISOString(),
     modificacion: new Date().toISOString()
   };
+
+  console.log('=== PETICIÓN DE VENTA COMPLETA ===');
+  console.log('URL:', 'https://api.exora.app/api/ventas');
+  console.log('Token presente:', token ? 'SÍ' : 'NO');
+  console.log('Datos de venta:', JSON.stringify(ventaData, null, 2));
+
   try {
+    console.log('=== ENVIANDO PETICIÓN ===');
     const response = await apiClient.post('/ventas', ventaData, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
+    console.log('=== RESPUESTA EXITOSA ===');
+    console.log('Status:', response.status);
+    console.log('Data:', response.data);
     return response.data;
   } catch (error: any) {
+    console.error('=== ERROR EN VENTA ===');
+    console.error('Status:', error?.response?.status);
+    console.error('Response data:', error?.response?.data);
+    console.error('Error message:', error?.message);
+    console.error('Full error:', error);
+
     const message = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'Error al registrar la venta';
     throw new Error(message);
   }

@@ -79,12 +79,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           error: null
         });
 
+        // Solo mostrar notificación si no hay citas o si hay un cambio significativo
         const hiddenCount = response.citas.length - filteredAndSorted.length;
-        const message = hiddenCount > 0
-          ? `Citas cargadas: ${response.citas.length} (${filteredAndSorted.length} mostradas, ${hiddenCount} pagadas finalizadas ocultas)`
-          : `Citas cargadas: ${response.citas.length} (todas mostradas)`;
 
-        toast.success(message);
+        // Solo mostrar toast para casos específicos para reducir ruido
+        if (response.citas.length === 0) {
+          toast('No hay citas para este día', { icon: 'ℹ️' });
+        } else if (hiddenCount > 0) {
+          toast.success(`${filteredAndSorted.length} citas disponibles (${hiddenCount} finalizadas ocultas)`);
+        }
       } else {
         throw new Error('Error al obtener las citas');
       }

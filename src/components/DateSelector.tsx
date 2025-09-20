@@ -24,12 +24,15 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 
   const quickDates = useMemo(() => {
     const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dayAfterTomorrow = new Date(today);
     dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
 
     return [
+      { label: 'Ayer', date: formatDateForAPILocal(yesterday) },
       { label: 'Hoy', date: formatDateForAPILocal(today) },
       { label: 'Mañana', date: formatDateForAPILocal(tomorrow) },
       { label: 'Pasado mañana', date: formatDateForAPILocal(dayAfterTomorrow) }
@@ -53,12 +56,12 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-[60]"
+            className="fixed inset-0 z-[999]"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
+          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[1000]">
             <div className="p-4">
               {/* Quick date selection */}
               <div className="mb-4">

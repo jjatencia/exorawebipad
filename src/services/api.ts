@@ -18,6 +18,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers['x-token'] = token;
     }
+
+    // Debug: log headers para ventas
+    if (config.url?.includes('ventas')) {
+      console.log('=== HEADERS FINALES ===');
+      console.log('Headers enviados:', config.headers);
+    }
+
     return config;
   },
   (error) => {
@@ -29,16 +36,24 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    const errorMessage = error.response?.data?.message || error.response?.data?.msg || error.message || 'Error de conexión';
+
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      window.location.href = '/login';
+      // Solo eliminar token si el error específicamente indica que el token es inválido/expirado
+      // No eliminarlo por problemas de permisos específicos
+      if (errorMessage.includes('token') && (errorMessage.includes('expirado') || errorMessage.includes('inválido') || errorMessage.includes('válido'))) {
+        console.warn('Token realmente expirado/inválido - eliminando del localStorage');
+        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+      } else {
+        console.warn('Error 401 pero token podría ser válido (problema de permisos):', errorMessage);
+      }
     }
-    
+
     return Promise.reject({
-      message: error.response?.data?.message || error.message || 'Error de conexión',
-      status: error.response?.status
+      message: errorMessage,
+      status: error.response?.status,
+      authError: error.response?.status === 401
     });
   }
 );

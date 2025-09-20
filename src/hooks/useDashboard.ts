@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useAppointmentStore } from '../stores/appointmentStore';
-import { formatDateForAPILocal } from '../utils/helpers';
+// import { formatDateForAPILocal } from '../utils/helpers'; // No longer needed after removing date restriction
 import { createVenta } from '../services/ventasService';
 import { Appointment } from '../types';
 
@@ -60,14 +60,15 @@ export const useDashboard = (): UseDashboardResult => {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    const now = new Date();
-    const today = formatDateForAPILocal(now);
+  // Comentado: Este efecto causaba loops infinitos al forzar fechas pasadas a cambiar a hoy
+  // useEffect(() => {
+  //   const now = new Date();
+  //   const today = formatDateForAPILocal(now);
 
-    if (currentDate < today) {
-      setCurrentDate(today);
-    }
-  }, [currentDate, setCurrentDate]);
+  //   if (currentDate < today) {
+  //     setCurrentDate(today);
+  //   }
+  // }, [currentDate, setCurrentDate]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -154,10 +155,18 @@ export const useDashboard = (): UseDashboardResult => {
       } catch (error: any) {
         toast.dismiss();
         console.error('Error al procesar el pago:', error);
-        toast.error(error.message || 'Error al procesar el pago');
+
+        // Handle auth errors gracefully
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al procesar el pago');
+        }
       }
     },
-    [currentDate, currentIndex, filteredAppointments, fetchAppointments, resetPaymentMode]
+    [currentDate, currentIndex, filteredAppointments, fetchAppointments, resetPaymentMode, logoutStore, navigate]
   );
 
   const cancelPayment = useCallback(() => {
