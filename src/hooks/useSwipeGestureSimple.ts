@@ -87,9 +87,17 @@ export const useSwipeGestureSimple = ({
     if (disabled) return;
 
     if (!down) {
-      const shouldSwipe = Math.abs(mx) > SWIPE_THRESHOLD;
+      const absX = Math.abs(mx);
+      const absY = Math.abs(my);
 
-      if (shouldSwipe) {
+      const isVerticalPreference = absY > absX && absY > VERTICAL_SWIPE_THRESHOLD;
+
+      if (isVerticalPreference) {
+        handleVerticalSwipe(my);
+        return;
+      }
+
+      if (absX > SWIPE_THRESHOLD) {
         const isLeftSwipe = mx < 0;
 
         if (isAtEdge(isLeftSwipe)) {
@@ -98,9 +106,10 @@ export const useSwipeGestureSimple = ({
         }
 
         executeSwipeAnimation(isLeftSwipe);
-      } else {
-        handleVerticalSwipe(my);
+        return;
       }
+
+      handleVerticalSwipe(my);
     } else {
       handleDragFeedback(mx, my);
     }
