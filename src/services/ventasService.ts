@@ -1,6 +1,4 @@
 import { Appointment } from '../types';
-import { apiClient } from './api';
-import { STORAGE_KEYS } from '../utils/constants';
 
 export interface VentaData {
   usuario: string;
