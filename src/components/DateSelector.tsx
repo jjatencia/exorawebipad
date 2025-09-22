@@ -40,7 +40,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   }, []);
 
   return (
-    <div className="relative z-[60]">
+    <div className="relative z-[100]">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
@@ -56,12 +56,12 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-[999]"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[1000]">
+          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[9999]">
             <div className="p-4">
               {/* Quick date selection */}
               <div className="mb-4">

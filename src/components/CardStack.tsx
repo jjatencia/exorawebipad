@@ -15,18 +15,18 @@ interface CardStackProps {
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
 }
 
-// Style constants - Usar el espacio disponible de forma inteligente
+// Style constants - Hacer las tarjetas más grandes y mejor distribuidas
 const CONTAINER_STYLE = {
-  // Usar flexbox en lugar de altura fija
+  // Usar más espacio para las tarjetas
   flex: '1',
   display: 'flex',
   flexDirection: 'column' as const,
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
   padding: '1rem',
-  // Altura máxima para no exceder en pantallas muy grandes
-  maxHeight: '600px',
-  minHeight: '400px'
+  // Altura más generosa para las tarjetas
+  maxHeight: '75vh',
+  minHeight: '550px'
 };
 
 const CARD_STYLES = {

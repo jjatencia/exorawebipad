@@ -16,8 +16,10 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     margin: 0;
+    height: 100%;
+    overflow: hidden;
     font-family: var(--font-main);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -25,18 +27,17 @@ body {
 }
 
 #root {
-    /* Usar toda la altura disponible sin exceder */
-    height: 100vh;
-    /* No necesita padding superior, solo usamos la altura disponible */
+    height: 100%;
+    overflow: hidden;
 }
 
 /* Safe area solo para el footer - Simplificado y efectivo */
 .safe-area-bottom {
-    padding-bottom: 1rem;
+    padding-bottom: 0;
 }
 
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .safe-area-bottom {
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
     }
 }

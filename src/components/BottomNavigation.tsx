@@ -19,9 +19,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   disabled = false
 }) => {
   return (
-    <div 
-      className="safe-area-bottom bg-white border-t border-gray-200"
-      style={{ backgroundColor: 'var(--exora-primary)' }}
+    <div
+      className="safe-area-bottom bg-white border-t border-gray-200 flex flex-col justify-end"
+      style={{ backgroundColor: 'var(--exora-primary)', minHeight: '80px' }}
     >
       <div className="flex items-center justify-between px-6 py-4">
         {/* Previous Button */}

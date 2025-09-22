@@ -10,17 +10,17 @@ interface UseSwipeGestureProps {
   isLast?: boolean;
 }
 
-// Animation constants
-const SWIPE_THRESHOLD = 60;
-const VERTICAL_SWIPE_THRESHOLD = 60;
+// Animation constants - Más sensible para movimiento libre
+const SWIPE_THRESHOLD = 80;
+const VERTICAL_SWIPE_THRESHOLD = 80;
 const ANIMATION_DELAY = 150;
-const DRAG_RESISTANCE = 0.8;
-const VERTICAL_RESISTANCE = 0.3;
+const DRAG_RESISTANCE = 1.0;
+const VERTICAL_RESISTANCE = 1.0;
 const PROGRESS_DIVISOR = 150;
 
-// Animation configs
-const DEFAULT_CONFIG = { tension: 300, friction: 30 };
-const EXIT_CONFIG = { tension: 180, friction: 26 };
+// Animation configs - Más fluido y físico
+const DEFAULT_CONFIG = { tension: 200, friction: 20 };
+const EXIT_CONFIG = { tension: 150, friction: 20 };
 
 // Reset position object
 const RESET_POSITION = { x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 };
@@ -73,12 +73,16 @@ export const useSwipeGestureSimple = ({
 
   const handleDragFeedback = (mx: number, my: number) => {
     const progress = Math.min(Math.abs(mx) / PROGRESS_DIVISOR, 1);
+    const distance = Math.sqrt(mx * mx + my * my);
+    const rotationX = my / 20; // Rotación en X para efecto 3D
+    const rotationY = mx / 20; // Rotación en Y para efecto 3D
+
     api.start({
       x: mx * DRAG_RESISTANCE,
       y: my * VERTICAL_RESISTANCE,
-      opacity: Math.max(0.85, 1 - progress * 0.15),
-      scale: Math.max(0.97, 1 - progress * 0.03),
-      rotate: mx / 15,
+      opacity: Math.max(0.85, 1 - progress * 0.1),
+      scale: Math.max(0.95, 1 - (distance / 1000) * 0.05),
+      rotate: mx / 10, // Rotación Z más pronunciada
       immediate: true
     });
   };
@@ -113,6 +117,12 @@ export const useSwipeGestureSimple = ({
     } else {
       handleDragFeedback(mx, my);
     }
+  }, {
+    // Configuración para movimiento inmediato y fluido
+    threshold: 0, // Sin umbral - respuesta inmediata
+    filterTaps: false, // No filtrar taps para respuesta más rápida
+    preventScroll: false,
+    pointer: { touch: true } // Optimizado para touch
   });
 
   return {
