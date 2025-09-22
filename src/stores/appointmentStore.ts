@@ -62,7 +62,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const dateForAPI = new Date(date + 'T00:00:00.000Z').toISOString();
 
       const response = await AppointmentsService.fetchAppointments({
-        empresa: "662f5bb1f956857b8cd0d9c7", // From JWT token
+        empresa: import.meta.env.VITE_COMPANY_ID || "662f5bb1f956857b8cd0d9c7",
         fecha: dateForAPI
       });
 

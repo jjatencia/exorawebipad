@@ -24,12 +24,28 @@ export interface VentaData {
   fechaVenta: string;
 }
 
+// Token validation helper
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? Date.now() >= payload.exp * 1000 : false;
+  } catch {
+    return true;
+  }
+};
+
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
-  // Usar el token de LBJ que tiene permisos para crear ventas
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI2NjJmNWJiMmY5NTY4NTdiOGNkMGQ5Y2EiLCJub21icmUiOiJMQkoiLCJyb2xlIjoiQlVTSU5FU1NfUk9MRSIsImVtcHJlc2EiOiI2NjJmNWJiMWY5NTY4NTdiOGNkMGQ5YzciLCJwcm9mZXNpb25hbCI6bnVsbCwiaWF0IjoxNzU4NDA1MzcyfQ.Jf54Re-55s_KY-BTSDJOK32cGoHm2z15P2Lt3QYSgnw';
+  // Use development token if available, otherwise fallback to localStorage
+  const devToken = import.meta.env.VITE_DEV_BUSINESS_TOKEN;
+  const token = devToken || localStorage.getItem(import.meta.env.VITE_TOKEN_STORAGE_KEY || 'exora_auth_token');
 
   if (!token) {
-    throw new Error('No hay token de autenticación');
+    throw new Error('No hay token de autenticación válido');
+  }
+
+  // Validate token if not in development mode
+  if (!devToken && isTokenExpired(token)) {
+    throw new Error('Token de autenticación expirado. Por favor, inicia sesión nuevamente.');
   }
 
   // Preparar los datos como los espera la API (solo IDs, igual que la app que funciona)
@@ -55,22 +71,14 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     cita: appointment._id
   };
 
-  console.log('=== PETICIÓN DE VENTA COMPLETA ===');
-  console.log('URL:', '/api/ventas (proxy -> https://api.exora.app)');
-  console.log('Token presente:', token ? 'SÍ' : 'NO');
-  console.log('Datos de venta:', JSON.stringify(ventaData, null, 2));
+  // Debug info (non-sensitive only)
+  if (import.meta.env.DEV) {
+    console.log('=== PETICIÓN DE VENTA ===');
+    console.log('URL:', 'https://api.exora.app/api/ventas');
+    console.log('Token presente:', token ? 'SÍ' : 'NO');
+  }
 
   try {
-    console.log('=== ENVIANDO PETICIÓN ===');
-    console.log('=== CONFIGURACIÓN COMPLETA ===');
-    console.log('URL:', 'https://api.exora.app/api/ventas');
-    console.log('Method:', 'POST');
-    console.log('Headers:', {
-      'Content-Type': 'application/json',
-      'x-token': token ? token.substring(0, 50) + '...' : 'NO TOKEN'
-    });
-    console.log('Body (string):', JSON.stringify(ventaData));
-    console.log('Body length:', JSON.stringify(ventaData).length);
 
     const response = await fetch('https://api.exora.app/api/ventas', {
       method: 'POST',
@@ -81,30 +89,30 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
       body: JSON.stringify(ventaData)
     });
 
-    console.log('=== RESPUESTA RECIBIDA ===');
-    console.log('Response object:', response);
-    console.log('Status:', response.status);
-    console.log('Status text:', response.statusText);
-    console.log('Headers:', response.headers);
+    if (import.meta.env.DEV) {
+      console.log('=== RESPUESTA RECIBIDA ===');
+      console.log('Status:', response.status);
+    }
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.log('Error response body:', errorData);
-      throw new Error(`HTTP ${response.status}: ${errorData}`);
+      if (import.meta.env.DEV) {
+        console.log('Error response:', response.status);
+      }
+      throw new Error(`HTTP ${response.status}: Error en la venta`);
     }
 
     const responseData = await response.json();
 
-    console.log('=== RESPUESTA EXITOSA ===');
-    console.log('Status:', response.status);
-    console.log('Data:', responseData);
+    if (import.meta.env.DEV) {
+      console.log('=== VENTA EXITOSA ===');
+    }
     return responseData;
   } catch (error: any) {
-    console.error('=== ERROR EN VENTA ===');
-    console.error('Status:', error?.response?.status);
-    console.error('Response data:', error?.response?.data);
-    console.error('Error message:', error?.message);
-    console.error('Full error:', error);
+    if (import.meta.env.DEV) {
+      console.error('=== ERROR EN VENTA ===');
+      console.error('Error message:', error?.message);
+    }
 
     const message = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'Error al registrar la venta';
     throw new Error(message);
