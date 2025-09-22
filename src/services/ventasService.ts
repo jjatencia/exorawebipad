@@ -35,16 +35,15 @@ const isTokenExpired = (token: string): boolean => {
 };
 
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
-  // Use development token if available, otherwise fallback to localStorage
-  const devToken = (import.meta as any).env?.VITE_DEV_BUSINESS_TOKEN;
-  const token = devToken || localStorage.getItem((import.meta as any).env?.VITE_TOKEN_STORAGE_KEY || 'exora_auth_token');
+  // Get token from localStorage
+  const token = localStorage.getItem((import.meta as any).env?.VITE_TOKEN_STORAGE_KEY || 'exora_auth_token');
 
   if (!token) {
     throw new Error('No hay token de autenticación válido');
   }
 
-  // Validate token if not in development mode
-  if (!devToken && isTokenExpired(token)) {
+  // Validate token
+  if (isTokenExpired(token)) {
     throw new Error('Token de autenticación expirado. Por favor, inicia sesión nuevamente.');
   }
 
