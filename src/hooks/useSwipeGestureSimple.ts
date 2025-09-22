@@ -74,8 +74,6 @@ export const useSwipeGestureSimple = ({
   const handleDragFeedback = (mx: number, my: number) => {
     const progress = Math.min(Math.abs(mx) / PROGRESS_DIVISOR, 1);
     const distance = Math.sqrt(mx * mx + my * my);
-    const rotationX = my / 20; // Rotación en X para efecto 3D
-    const rotationY = mx / 20; // Rotación en Y para efecto 3D
 
     api.start({
       x: mx * DRAG_RESISTANCE,
