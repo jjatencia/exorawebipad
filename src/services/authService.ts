@@ -1,4 +1,6 @@
 import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+import { SecurityUtils, SecureStorage } from '../utils/security';
+import { isValidEmail } from '../utils/helpers';
 
 export interface LoginCredentials {
   email: string;
@@ -54,12 +56,31 @@ const resolveUser = (
 export class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
+      // Validar credenciales antes de enviar
+      if (!isValidEmail(credentials.email)) {
+        return {
+          ok: false,
+          msg: 'Email inválido'
+        };
+      }
+
+      if (!credentials.password || credentials.password.length < 1) {
+        return {
+          ok: false,
+          msg: 'Password requerido'
+        };
+      }
+
       const response = await fetch(`${API_BASE_URL}/auth/ext-login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...SecurityUtils.getSecurityHeaders()
         },
-        body: JSON.stringify(credentials)
+        body: JSON.stringify({
+          email: SecurityUtils.sanitizeInput(credentials.email),
+          password: credentials.password // No sanitizar passwords
+        })
       });
 
       if (!response.ok) {
@@ -82,7 +103,20 @@ export class AuthService {
       const user = resolveUser(data, credentials);
 
       if (data.ok && data.token) {
-        this.setToken(data.token);
+        // Validar estructura del token antes de almacenar
+        if (SecurityUtils.isValidJWTStructure(data.token)) {
+          this.setToken(data.token);
+
+          // Almacenar datos de usuario de forma segura
+          if (user) {
+            SecureStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+          }
+        } else {
+          return {
+            ok: false,
+            msg: 'Token inválido recibido del servidor'
+          };
+        }
       }
 
       return {
@@ -92,7 +126,8 @@ export class AuthService {
         msg: data.msg || data.message
       };
     } catch (error) {
-      console.error('Login error:', error);
+      // No loggear el error completo por seguridad
+      console.error('Login error');
       return {
         ok: false,
         msg: 'Error de conexión. Verifica tu internet.'
@@ -102,22 +137,50 @@ export class AuthService {
 
   static setToken(token: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+
+    // Validar token antes de almacenar
+    if (!SecurityUtils.isValidJWTStructure(token)) {
+      throw new Error('Token inválido');
+    }
+
+    SecureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
   }
 
   static getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+
+    const token = SecureStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+
+    // Verificar si el token ha expirado
+    if (token && SecurityUtils.isTokenExpired(token)) {
+      this.removeToken();
+      return null;
+    }
+
+    return token;
   }
 
   static removeToken(): void {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    SecureStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    SecureStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }
 
   static isAuthenticated(): boolean {
-    return this.getToken() !== null;
+    const token = this.getToken();
+    return token !== null && !SecurityUtils.isTokenExpired(token);
+  }
+
+  static getUserData(): any {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const userData = SecureStorage.getItem(STORAGE_KEYS.USER_DATA);
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error reading user data');
+      return null;
+    }
   }
 
   static logout(): void {

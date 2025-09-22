@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
 import { Appointment } from '../types';
+import { SecurityUtils } from '../utils/security';
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -8,6 +9,7 @@ export const apiClient = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    ...SecurityUtils.getSecurityHeaders()
   },
 });
 
@@ -19,10 +21,12 @@ apiClient.interceptors.request.use(
       config.headers['x-token'] = token;
     }
 
-    // Debug: log headers para ventas
-    if (config.url?.includes('ventas')) {
-      console.log('=== HEADERS FINALES ===');
-      console.log('Headers enviados:', config.headers);
+    // Solo debug en desarrollo
+    if (process.env.NODE_ENV === 'development' && config.url?.includes('ventas')) {
+      console.log('=== REQUEST DEBUG ===');
+      console.log('URL:', config.url);
+      console.log('Method:', config.method);
+      // No loggear headers que pueden contener tokens
     }
 
     return config;
@@ -42,11 +46,15 @@ apiClient.interceptors.response.use(
       // Solo eliminar token si el error específicamente indica que el token es inválido/expirado
       // No eliminarlo por problemas de permisos específicos
       if (errorMessage.includes('token') && (errorMessage.includes('expirado') || errorMessage.includes('inválido') || errorMessage.includes('válido'))) {
-        console.warn('Token realmente expirado/inválido - eliminando del localStorage');
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Token expirado/inválido - eliminando del localStorage');
+        }
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER_DATA);
       } else {
-        console.warn('Error 401 pero token podría ser válido (problema de permisos):', errorMessage);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Error 401 - problema de permisos');
+        }
       }
     }
 

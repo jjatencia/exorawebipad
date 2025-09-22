@@ -23,8 +23,42 @@ export const parseDate = (dateString: string): Date => {
 };
 
 export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Usar validación más estricta de SecurityUtils
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   return emailRegex.test(email);
+};
+
+/**
+ * Sanitiza comentarios para prevenir XSS
+ */
+export const sanitizeComment = (comment: string): string => {
+  if (!comment || typeof comment !== 'string') return '';
+
+  return comment
+    .replace(/[<>]/g, '') // Remover < y >
+    .replace(/javascript:/gi, '') // Remover javascript:
+    .replace(/on\w+=/gi, '') // Remover event handlers
+    .trim()
+    .substring(0, 500); // Limitar longitud
+};
+
+/**
+ * Valida que un importe sea seguro
+ */
+export const isValidAmount = (amount: number): boolean => {
+  return typeof amount === 'number' &&
+         !isNaN(amount) &&
+         amount >= 0 &&
+         amount <= 999999; // Límite razonable
+};
+
+/**
+ * Valida ID de MongoDB
+ */
+export const isValidObjectId = (id: string): boolean => {
+  if (!id || typeof id !== 'string') return false;
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  return objectIdRegex.test(id);
 };
 
 export const debounce = <T extends (...args: any[]) => void>(
