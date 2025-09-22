@@ -4,30 +4,53 @@ import { AppointmentState, Appointment } from '../types';
 import { AppointmentsService } from '../services/appointmentsService';
 import { formatDateForAPILocal } from '../utils/helpers';
 
-const filterAndSortAppointments = (appointments: Appointment[]) => {
-  const now = new Date();
+// Memoization cache for expensive filtering operations
+let filterCache = new Map<string, Appointment[]>();
+const CACHE_MAX_SIZE = 10;
 
-  // Filtrar citas pagadas que ya pasaron su hora + 15 min
+// Request debouncing to prevent duplicate API calls
+let activeRequests = new Map<string, Promise<any>>();
+
+const filterAndSortAppointments = (appointments: Appointment[], forceRefresh = false) => {
+  // Create cache key based on appointments data and current time (rounded to 5 min intervals)
+  const now = new Date();
+  const timeSlot = Math.floor(now.getTime() / (5 * 60 * 1000)); // 5-minute intervals
+  const cacheKey = `${appointments.length}-${timeSlot}-${appointments.map(a => `${a._id}-${a.pagada}`).join(',')}`;
+
+  // Check cache first (unless force refresh)
+  if (!forceRefresh && filterCache.has(cacheKey)) {
+    return filterCache.get(cacheKey)!;
+  }
+
+  // Perform expensive filtering and sorting
   const filteredAppointments = appointments.filter(appointment => {
     if (!appointment.pagada) {
-      // Citas no pagadas siempre se muestran
-      return true;
+      return true; // Unpaid appointments always shown
     }
 
-    // Para citas pagadas, verificar si ya pasaron + 15 min
+    // For paid appointments, check if 15+ minutes have passed
     const appointmentDateTime = new Date(appointment.fecha);
     appointmentDateTime.setMinutes(appointmentDateTime.getMinutes() + 15);
-
-    // Si ya pasó la hora + 15 min, ocultar la cita
     return now <= appointmentDateTime;
   });
 
-  // Ordenar por fecha/hora
-  return filteredAppointments.sort((a, b) => {
+  // Sort by date/time
+  const result = filteredAppointments.sort((a, b) => {
     const dateA = new Date(a.fecha);
     const dateB = new Date(b.fecha);
     return dateA.getTime() - dateB.getTime();
   });
+
+  // Cache management: remove oldest entries if cache is too large
+  if (filterCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = filterCache.keys().next().value;
+    filterCache.delete(firstKey);
+  }
+
+  // Cache the result
+  filterCache.set(cacheKey, result);
+
+  return result;
 };
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
@@ -41,6 +64,12 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   fetchAppointments: async (date: string) => {
     const currentState = get();
+
+    // Check for active request for this date to prevent duplicates
+    const requestKey = `appointments-${date}`;
+    if (activeRequests.has(requestKey)) {
+      return activeRequests.get(requestKey);
+    }
 
     // Avoid duplicate requests
     if (currentState.isLoading && currentState.currentDate === date) {
@@ -57,14 +86,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       showPaidOnly: false // Mantener por compatibilidad pero no se usa
     });
 
-    try {
-      // Convert date string to ISO format for API
-      const dateForAPI = new Date(date + 'T00:00:00.000Z').toISOString();
+    // Create and track the request promise
+    const requestPromise = (async () => {
+      try {
+        // Convert date string to ISO format for API
+        const dateForAPI = new Date(date + 'T00:00:00.000Z').toISOString();
 
-      const response = await AppointmentsService.fetchAppointments({
-        empresa: import.meta.env.VITE_COMPANY_ID || "662f5bb1f956857b8cd0d9c7",
-        fecha: dateForAPI
-      });
+        const response = await AppointmentsService.fetchAppointments({
+          empresa: import.meta.env.VITE_COMPANY_ID || "662f5bb1f956857b8cd0d9c7",
+          fecha: dateForAPI
+        });
 
       if (response.ok) {
         // Filtrar y ordenar citas según las reglas de negocio
@@ -104,8 +135,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       });
 
       toast.error(error.message || 'Error al cargar las citas');
+    } finally {
+      // Clean up active request
+      activeRequests.delete(requestKey);
     }
-  },
+  })();
+
+  // Store the active request
+  activeRequests.set(requestKey, requestPromise);
+  return requestPromise;
+},
 
   setCurrentIndex: (index: number) => {
     const { filteredAppointments } = get();
@@ -126,5 +165,21 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   clearError: () => {
     set({ error: null });
+  },
+
+  // Performance optimization methods
+  clearCache: () => {
+    filterCache.clear();
+    activeRequests.clear();
+  },
+
+  refreshCurrentData: () => {
+    const { currentDate } = get();
+    if (currentDate) {
+      // Clear cache for current date and refetch
+      const requestKey = `appointments-${currentDate}`;
+      activeRequests.delete(requestKey);
+      return get().fetchAppointments(currentDate);
+    }
   }
 }));

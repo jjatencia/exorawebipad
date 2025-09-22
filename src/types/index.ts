@@ -114,6 +114,8 @@ export interface AppointmentState {
   setCurrentDate: (date: string) => void;
   toggleShowPaid: () => void;
   clearError: () => void;
+  clearCache: () => void;
+  refreshCurrentData: () => Promise<void> | undefined;
 }
 
 export interface LoginCredentials {
