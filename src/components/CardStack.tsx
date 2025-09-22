@@ -17,8 +17,9 @@ interface CardStackProps {
 
 // Style constants
 const CONTAINER_STYLE = {
-  height: 'calc(100vh - 200px)',
-  maxHeight: '600px'
+  height: 'calc(100vh - 200px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))',
+  maxHeight: '600px',
+  minHeight: '400px'
 };
 
 const CARD_STYLES = {

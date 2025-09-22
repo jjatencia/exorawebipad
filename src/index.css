@@ -26,11 +26,31 @@ body {
 
 #root {
     min-height: 100vh;
+    /* Asegurar que el layout respete las safe areas */
+    min-height: calc(100vh - env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Safe area for iPhone */
+/* Safe area for iPhone - Mejorado para dispositivos más nuevos */
 @supports (padding: max(0px)) {
     .safe-area-bottom {
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+        /* Asegurar que siempre haya espacio mínimo */
+        min-height: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* Fallback para dispositivos que no soportan env() */
+.safe-area-bottom {
+    padding-bottom: 1.5rem;
+    min-height: 5rem;
+}
+
+/* Específico para iOS con safe areas */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .safe-area-bottom {
+        padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+        /* Margin bottom adicional para dispositivos con indicador home */
+        margin-bottom: env(safe-area-inset-bottom, 0px);
     }
 }
