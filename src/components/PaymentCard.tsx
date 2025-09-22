@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { animated } from '@react-spring/web';
-import { Appointment } from '../types';
-import { PromocionesService } from '../services/promocionesService';
+import { Appointment, Servicio, Variante } from '../types';
+import { PromocionesService, Promocion } from '../services/promocionesService';
+import { ServiciosService } from '../services/serviciosService';
 import {
   CardIcon,
   CashIcon,
@@ -24,6 +25,16 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   const [precioConDescuento, setPrecioConDescuento] = useState<number>(appointment.importe);
   const [descuentoTotal, setDescuentoTotal] = useState<number>(0);
   const [loadingDescuentos, setLoadingDescuentos] = useState<boolean>(false);
+
+  // Estados para edición
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [serviciosDisponibles, setServiciosDisponibles] = useState<Servicio[]>([]);
+  const [variantesDisponibles, setVariantesDisponibles] = useState<Variante[]>([]);
+  const [promocionesDisponibles, setPromocionesDisponibles] = useState<Promocion[]>([]);
+  const [servicioSeleccionado, setServicioSeleccionado] = useState<Servicio | null>(appointment.servicios[0] || null);
+  const [variantesSeleccionadas, setVariantesSeleccionadas] = useState<Variante[]>(appointment.variantes || []);
+  const [promocionesSeleccionadas, setPromocionesSeleccionadas] = useState<string[]>(appointment.promocion || []);
+  const [precioCalculado, setPrecioCalculado] = useState<number>(appointment.importe);
   const appointmentDate = useMemo(() => new Date(appointment.fecha), [appointment.fecha]);
   const formattedTime = useMemo(
     () =>
@@ -87,6 +98,60 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
     calcularDescuentos();
   }, [appointment.promocion, appointment.empresa, appointment.importe]);
 
+  // Cargar datos para edición
+  useEffect(() => {
+    const cargarDatosEdicion = async () => {
+      if (!isEditing) return;
+
+      try {
+        const [servicios, variantes, promociones] = await Promise.all([
+          ServiciosService.getServicios(appointment.empresa),
+          ServiciosService.getVariantes(appointment.empresa),
+          PromocionesService.getPromocionesEmpresa(appointment.empresa)
+        ]);
+
+        setServiciosDisponibles(servicios);
+        setVariantesDisponibles(variantes);
+        setPromocionesDisponibles(promociones);
+      } catch (error) {
+        console.error('Error cargando datos para edición:', error);
+      }
+    };
+
+    cargarDatosEdicion();
+  }, [isEditing, appointment.empresa]);
+
+  // Recalcular precio cuando cambian las selecciones
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const calcularNuevoPrecio = async () => {
+      let precioBase = (servicioSeleccionado?.precio || 0) / 100; // Convertir centavos a euros
+
+      // Aquí se podría añadir lógica para variantes con precio
+      // precioBase += variantesSeleccionadas.reduce((sum, v) => sum + (v.precio || 0), 0);
+
+      // Aplicar descuentos de promociones
+      let descuentoAcumulado = 0;
+      for (const promocionId of promocionesSeleccionadas) {
+        const promocion = promocionesDisponibles.find(p => p._id === promocionId);
+        if (promocion && promocion.activo && promocion.tipo === 'descuento' && promocion.destino === 'servicio') {
+          if (promocion.porcentaje !== null && promocion.porcentaje !== undefined) {
+            descuentoAcumulado += precioBase * (promocion.porcentaje / 100);
+          } else if (promocion.cifra !== undefined && promocion.cifra > 0) {
+            descuentoAcumulado += promocion.cifra / 100;
+          }
+        }
+      }
+
+      const precioFinal = Math.max(0, precioBase - descuentoAcumulado);
+      setPrecioCalculado(precioFinal);
+      setDescuentoTotal(descuentoAcumulado);
+    };
+
+    calcularNuevoPrecio();
+  }, [servicioSeleccionado, variantesSeleccionadas, promocionesSeleccionadas, promocionesDisponibles, isEditing]);
+
   const paymentMethods = useMemo(
     () => [
       { id: 'Pago en efectivo', name: 'Efectivo', icon: CashIcon },
@@ -134,25 +199,153 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
         {/* Service Info */}
         <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
-          <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
-            <ServiceIcon size={16} />
-            <div className="flex-1">
-              <div className="text-base font-medium">
-                {appointment.servicios[0]?.nombre || 'Servicio no especificado'}
-              </div>
+          {/* Botón de editar */}
+          <div className="flex justify-between items-center">
+            <div className="text-base font-medium" style={{ color: '#555BF6' }}>
+              {isEditing ? 'Editando servicio' : 'Servicio reservado'}
             </div>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: isEditing ? '#E0E7FF' : '#D2E9FF',
+                color: '#555BF6'
+              }}
+            >
+              {isEditing ? 'Cancelar' : 'Editar'}
+            </button>
           </div>
 
-          {appointment.variantes && appointment.variantes.length > 0 && (
-            <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
-              <VariantIcon size={16} />
-              <div className="flex-1">
-                <div className="text-base font-medium">Variante:</div>
-                <div className="text-sm mt-1" style={{ color: '#555BF6' }}>
-                  {appointment.variantes.map(v => v.nombre).join(', ')}
+          {!isEditing ? (
+            // Vista normal
+            <>
+              <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
+                <ServiceIcon size={16} />
+                <div className="flex-1">
+                  <div className="text-base font-medium">
+                    {servicioSeleccionado?.nombre || appointment.servicios[0]?.nombre || 'Servicio no especificado'}
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {(variantesSeleccionadas.length > 0 || (appointment.variantes && appointment.variantes.length > 0)) && (
+                <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
+                  <VariantIcon size={16} />
+                  <div className="flex-1">
+                    <div className="text-base font-medium">Variante:</div>
+                    <div className="text-sm mt-1" style={{ color: '#555BF6' }}>
+                      {(variantesSeleccionadas.length > 0 ? variantesSeleccionadas : appointment.variantes).map(v => v.nombre).join(', ')}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // Vista de edición
+            <>
+              {/* Selector de servicio */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium" style={{ color: '#555BF6' }}>
+                  Servicio:
+                </label>
+                <select
+                  value={servicioSeleccionado?._id || ''}
+                  onChange={(e) => {
+                    const servicio = serviciosDisponibles.find(s => s._id === e.target.value);
+                    setServicioSeleccionado(servicio || null);
+                  }}
+                  className="w-full p-2 border rounded-md text-sm"
+                  style={{ borderColor: '#555BF6', color: '#555BF6' }}
+                >
+                  <option value="">Seleccionar servicio</option>
+                  {serviciosDisponibles.map(servicio => (
+                    <option key={servicio._id} value={servicio._id}>
+                      {servicio.nombre} - €{(servicio.precio / 100).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selector de variantes */}
+              {variantesDisponibles.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" style={{ color: '#555BF6' }}>
+                    Variantes:
+                  </label>
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {variantesDisponibles.map(variante => (
+                      <label key={variante._id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={variantesSeleccionadas.some(v => v._id === variante._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setVariantesSeleccionadas([...variantesSeleccionadas, variante]);
+                            } else {
+                              setVariantesSeleccionadas(variantesSeleccionadas.filter(v => v._id !== variante._id));
+                            }
+                          }}
+                          className="text-sm"
+                        />
+                        <span className="text-sm" style={{ color: '#555BF6' }}>
+                          {variante.nombre}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Selector de promociones */}
+              {promocionesDisponibles.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" style={{ color: '#555BF6' }}>
+                    Promociones:
+                  </label>
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {promocionesDisponibles
+                      .filter(p => p.activo && p.tipo === 'descuento' && p.destino === 'servicio')
+                      .map(promocion => (
+                      <label key={promocion._id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={promocionesSeleccionadas.includes(promocion._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPromocionesSeleccionadas([...promocionesSeleccionadas, promocion._id]);
+                            } else {
+                              setPromocionesSeleccionadas(promocionesSeleccionadas.filter(p => p !== promocion._id));
+                            }
+                          }}
+                          className="text-sm"
+                        />
+                        <span className="text-sm" style={{ color: '#555BF6' }}>
+                          {promocion.titulo || 'Promoción'}
+                          {promocion.porcentaje && ` (-${promocion.porcentaje}%)`}
+                          {promocion.cifra && ` (-€${(promocion.cifra / 100).toFixed(2)})`}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Botón para confirmar cambios */}
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  // Aquí se aplicarían los cambios al precio final
+                  setPrecioConDescuento(precioCalculado);
+                }}
+                className="w-full py-2 rounded-md text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: '#555BF6',
+                  color: 'white'
+                }}
+              >
+                Confirmar cambios
+              </button>
+            </>
           )}
 
           {/* Promociones aplicadas */}
@@ -185,26 +378,35 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
           {/* Total */}
           <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#FAFAB0' }}>
-            <div className="text-base font-medium" style={{ color: '#555BF6' }}>Total a cobrar</div>
+            <div className="text-base font-medium" style={{ color: '#555BF6' }}>
+              {isEditing ? 'Precio estimado' : 'Total a cobrar'}
+            </div>
             {loadingDescuentos ? (
               <div className="text-lg" style={{ color: '#555BF6' }}>Calculando...</div>
             ) : (
               <>
-                {descuentoTotal > 0 ? (
+                {(descuentoTotal > 0 || (isEditing && precioCalculado !== ((servicioSeleccionado?.precio || 0) / 100))) ? (
                   <>
                     <div className="text-sm text-gray-600 line-through">
-                      €{appointment.importe.toFixed(2)}
+                      €{isEditing ? ((servicioSeleccionado?.precio || 0) / 100).toFixed(2) : appointment.importe.toFixed(2)}
                     </div>
                     <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
-                      €{precioConDescuento.toFixed(2)}
+                      €{(isEditing ? precioCalculado : precioConDescuento).toFixed(2)}
                     </div>
-                    <div className="text-xs text-red-600">
-                      Descuento: -€{descuentoTotal.toFixed(2)}
-                    </div>
+                    {descuentoTotal > 0 && (
+                      <div className="text-xs text-red-600">
+                        Descuento: -€{descuentoTotal.toFixed(2)}
+                      </div>
+                    )}
+                    {isEditing && (
+                      <div className="text-xs" style={{ color: '#555BF6' }}>
+                        Precio actualizado en tiempo real
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
-                    €{appointment.importe.toFixed(2)}
+                    €{(isEditing ? precioCalculado : appointment.importe).toFixed(2)}
                   </div>
                 )}
               </>
