@@ -119,6 +119,14 @@ export const PlusIcon = createIcon(
   </>
 );
 
+export const EuroIcon = createIcon(
+  <>
+    <path d="M14.5 8.5c-.5-1.5-2-2.5-3.5-2.5-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.5 0 3-1 3.5-2.5" />
+    <line x1="6" y1="10" x2="10" y2="10" />
+    <line x1="6" y1="14" x2="10" y2="14" />
+  </>
+);
+
 export const CheckIcon = createIcon(
   <polyline points="20,6 9,17 4,12" />
 );

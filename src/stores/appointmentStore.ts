@@ -103,6 +103,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         // Filtrar y ordenar citas según las reglas de negocio
         const filteredAndSorted = filterAndSortAppointments(response.citas);
 
+        // Log JSON examples for price analysis
+        if (response.citas.length > 0 && (import.meta as any).env?.DEV) {
+          console.log('=== EJEMPLOS JSON CITAS ===');
+          response.citas.forEach((cita, index) => {
+            console.log(`--- CITA ${index + 1} (${cita.usuario.nombre}) ---`);
+            console.log(JSON.stringify(cita, null, 2));
+          });
+        }
+
         set({
           appointments: response.citas,
           filteredAppointments: filteredAndSorted,

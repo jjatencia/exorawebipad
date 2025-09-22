@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
+import { PromocionesService } from '../services/promocionesService';
 import {
   CardIcon,
   CashIcon,
   CheckIcon,
-  CloseIcon,
   ServiceIcon,
   VariantIcon,
   WalletIcon
@@ -14,15 +14,16 @@ import {
 interface PaymentCardProps {
   appointment: Appointment;
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
-  onCancel?: () => void;
 }
 
 const PaymentCard: React.FC<PaymentCardProps> = ({
   appointment,
-  onCompletePayment,
-  onCancel
+  onCompletePayment
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [precioConDescuento, setPrecioConDescuento] = useState<number>(appointment.importe);
+  const [descuentoTotal, setDescuentoTotal] = useState<number>(0);
+  const [loadingDescuentos, setLoadingDescuentos] = useState<boolean>(false);
   const appointmentDate = useMemo(() => new Date(appointment.fecha), [appointment.fecha]);
   const formattedTime = useMemo(
     () =>
@@ -32,6 +33,59 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
       }),
     [appointmentDate]
   );
+
+  // Calcular descuentos por promociones
+  useEffect(() => {
+    const calcularDescuentos = async () => {
+      if (!appointment.promocion || appointment.promocion.length === 0) {
+        setPrecioConDescuento(appointment.importe);
+        setDescuentoTotal(0);
+        return;
+      }
+
+      setLoadingDescuentos(true);
+      try {
+        // Obtener promociones de la empresa
+        const promocionesEmpresa = await PromocionesService.getPromocionesEmpresa(appointment.empresa);
+
+        // Filtrar promociones aplicadas
+        const promocionesAplicadas = promocionesEmpresa.filter(promocion =>
+          appointment.promocion.includes(promocion._id)
+        );
+
+        let descuentoAcumulado = 0;
+
+        // Calcular descuento total
+        promocionesAplicadas.forEach(promocion => {
+          // Solo aplicar descuentos si la promoción está activa y es de tipo descuento para servicios
+          if (promocion.activo && promocion.tipo === 'descuento' && promocion.destino === 'servicio') {
+            if (promocion.porcentaje !== null && promocion.porcentaje !== undefined) {
+              // Descuento por porcentaje
+              const descuento = appointment.importe * (promocion.porcentaje / 100);
+              descuentoAcumulado += descuento;
+            } else if (promocion.cifra !== undefined && promocion.cifra > 0) {
+              // Descuento por cantidad fija (en centavos, convertir a euros)
+              const descuento = promocion.cifra / 100;
+              descuentoAcumulado += descuento;
+            }
+          }
+        });
+
+        const precioFinal = Math.max(0, appointment.importe - descuentoAcumulado);
+        setPrecioConDescuento(precioFinal);
+        setDescuentoTotal(descuentoAcumulado);
+      } catch (error) {
+        console.error('Error calculando descuentos en payment:', error);
+        // En caso de error, usar precio original
+        setPrecioConDescuento(appointment.importe);
+        setDescuentoTotal(0);
+      } finally {
+        setLoadingDescuentos(false);
+      }
+    };
+
+    calcularDescuentos();
+  }, [appointment.promocion, appointment.empresa, appointment.importe]);
 
   const paymentMethods = useMemo(
     () => [
@@ -68,13 +122,6 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
       }}
     >
       <div className="p-4 h-full flex flex-col relative">
-        {/* Close Button */}
-        <button
-          onClick={onCancel}
-          className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"
-        >
-          <CloseIcon size={20} />
-        </button>
         {/* Header */}
         <div className="flex-shrink-0 text-center mb-4 mt-6">
           <h2 className="text-xl font-bold mb-1" style={{ color: '#555BF6' }}>
@@ -108,12 +155,60 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
             </div>
           )}
 
+          {/* Promociones aplicadas */}
+          {appointment.promocion && appointment.promocion.length > 0 && (
+            <div className="flex items-start space-x-3" style={{ color: '#555BF6' }}>
+              <div className="flex-1">
+                <div className="text-base font-medium">Promociones:</div>
+                <div className="text-sm mt-1">
+                  {appointment.promocion.map((promocionId, index) => {
+                    let label = 'Promoción especial';
+                    if (promocionId === '66945b4a5706bb70baa15bc0') {
+                      label = 'Aleatorio o barbero Junior';
+                    } else if (promocionId === '66aff43347f5e3f837f20ad7') {
+                      label = 'Mañanas';
+                    }
+                    return (
+                      <span
+                        key={promocionId || index}
+                        className="inline-block px-2 py-1 rounded-md mr-1 mb-1 text-xs"
+                        style={{ backgroundColor: '#E0E7FF', color: '#555BF6' }}
+                      >
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Total */}
           <div className="rounded-lg p-3 text-center" style={{ backgroundColor: '#FAFAB0' }}>
             <div className="text-base font-medium" style={{ color: '#555BF6' }}>Total a cobrar</div>
-            <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
-              €{appointment.importe.toFixed(2)}
-            </div>
+            {loadingDescuentos ? (
+              <div className="text-lg" style={{ color: '#555BF6' }}>Calculando...</div>
+            ) : (
+              <>
+                {descuentoTotal > 0 ? (
+                  <>
+                    <div className="text-sm text-gray-600 line-through">
+                      €{appointment.importe.toFixed(2)}
+                    </div>
+                    <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
+                      €{precioConDescuento.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-red-600">
+                      Descuento: -€{descuentoTotal.toFixed(2)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
+                    €{appointment.importe.toFixed(2)}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Payment Methods */}
@@ -134,11 +229,11 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                     backgroundColor: selectedPaymentMethod === method.id ? '#FAFAB0' : 'rgba(250, 250, 176, 0.5)'
                   }}
                 >
-                  <IconComponent size={20} />
+                  <IconComponent size={20} style={{ color: '#555BF6' }} />
                   <span className="text-base font-medium" style={{ color: '#555BF6' }}>{method.name}</span>
                   {selectedPaymentMethod === method.id && (
                     <div className="ml-auto">
-                      <CheckIcon size={16} strokeWidth={3} />
+                      <CheckIcon size={16} strokeWidth={3} style={{ color: '#555BF6' }} />
                     </div>
                   )}
                 </button>

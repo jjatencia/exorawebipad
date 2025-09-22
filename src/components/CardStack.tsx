@@ -13,7 +13,6 @@ interface CardStackProps {
   onRefresh?: () => void;
   paymentMode?: boolean;
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
-  onCancelPayment?: () => void;
 }
 
 // Style constants
@@ -45,8 +44,7 @@ const CardStack: React.FC<CardStackProps> = ({
   onPrevious,
   onRefresh,
   paymentMode = false,
-  onCompletePayment,
-  onCancelPayment
+  onCompletePayment
 }) => {
   const currentAppointment = useMemo(
     () => appointments[currentIndex],
@@ -167,7 +165,6 @@ const CardStack: React.FC<CardStackProps> = ({
           <PaymentCard
             appointment={currentAppointment}
             onCompletePayment={onCompletePayment}
-            onCancel={onCancelPayment}
           />
         </div>
       </animated.div>

@@ -92,7 +92,6 @@ const Dashboard: React.FC = () => {
               onRefresh={handlers.refreshAppointments}
               paymentMode={paymentMode}
               onCompletePayment={handlers.completePayment}
-              onCancelPayment={handlers.cancelPayment}
             />
           </div>
         )}

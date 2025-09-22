@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import { isAppointmentDisabled } from '../utils/helpers';
+import { PromocionesService } from '../services/promocionesService';
 import {
   CommentIcon,
   DiscountIcon,
@@ -27,6 +28,25 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   onClick
 }) => {
   const isDisabled = isAppointmentDisabled(appointment);
+
+  // Probar API de promociones (solo en desarrollo y si hay promociones)
+  useEffect(() => {
+    if ((import.meta as any).env?.DEV && appointment.promocion && appointment.promocion.length > 0) {
+      const testPromocionAPIs = async () => {
+        console.log('=== PROBANDO APIS DE PROMOCIONES ===');
+        console.log('IDs de promoción:', appointment.promocion);
+
+        // Solo probamos el endpoint que funciona
+        console.log('\n--- Probando promociones por empresa ---');
+        const promocionesEmpresa = await PromocionesService.getPromocionesEmpresa(appointment.empresa);
+        if (promocionesEmpresa.length > 0) {
+          console.log('✅ Promociones por empresa:', promocionesEmpresa);
+        }
+      };
+
+      testPromocionAPIs();
+    }
+  }, [appointment.promocion, appointment.empresa]);
   const appointmentDate = useMemo(() => new Date(appointment.fecha), [appointment.fecha]);
   const formattedTime = useMemo(
     () =>
@@ -123,7 +143,13 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div className="flex-1 space-y-4 min-h-0">
           <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
             <PhoneIcon size={16} />
-            <span className="text-base">{appointment.usuario.telefono}</span>
+            <a
+              href={`tel:${appointment.usuario.telefono}`}
+              className={`text-base hover:underline ${isDisabled ? 'text-gray-400 pointer-events-none' : 'text-blue-600 hover:text-blue-800'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {appointment.usuario.telefono}
+            </a>
           </div>
 
           <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>

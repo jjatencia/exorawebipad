@@ -84,10 +84,10 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-BJ8l4i06.css",
+    "url": "assets/index-9VrhJjq5.css",
     "revision": null
   }, {
-    "url": "assets/index-D5KlRhO0.js",
+    "url": "assets/index-DJMPnlvc.js",
     "revision": null
   }, {
     "url": "Captura de pantalla 2025-09-16 a las 23.43.22.png",
@@ -109,7 +109,7 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "3d4e60044780b750966cf51f956a186b"
+    "revision": "af8efa9793278a21eda2a8f468aa0448"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"
@@ -134,8 +134,8 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
   workbox.registerRoute(/^https:\/\/api\./i, new workbox.NetworkFirst({
     "cacheName": "api-cache",
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 10,
-      maxAgeSeconds: 31536000
+      maxEntries: 50,
+      maxAgeSeconds: 900
     }), new workbox.CacheableResponsePlugin({
       statuses: [0, 200]
     })]
