@@ -15,9 +15,16 @@ interface CardStackProps {
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
 }
 
-// Style constants
+// Style constants - Usar el espacio disponible de forma inteligente
 const CONTAINER_STYLE = {
-  height: 'calc(100vh - 200px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))',
+  // Usar flexbox en lugar de altura fija
+  flex: '1',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  justifyContent: 'center' as const,
+  alignItems: 'center' as const,
+  padding: '1rem',
+  // Altura máxima para no exceder en pantallas muy grandes
   maxHeight: '600px',
   minHeight: '400px'
 };

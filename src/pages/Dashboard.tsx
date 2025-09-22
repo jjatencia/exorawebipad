@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--exora-background)' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--exora-background)' }}>
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center px-4 py-4">
+          <div className="flex-1 flex items-center justify-center px-4">
             <CardStack
               appointments={filteredAppointments}
               currentIndex={currentIndex}
