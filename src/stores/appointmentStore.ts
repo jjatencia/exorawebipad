@@ -44,7 +44,9 @@ const filterAndSortAppointments = (appointments: Appointment[], forceRefresh = f
   // Cache management: remove oldest entries if cache is too large
   if (filterCache.size >= CACHE_MAX_SIZE) {
     const firstKey = filterCache.keys().next().value;
-    filterCache.delete(firstKey);
+    if (firstKey) {
+      filterCache.delete(firstKey);
+    }
   }
 
   // Cache the result
@@ -93,7 +95,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         const dateForAPI = new Date(date + 'T00:00:00.000Z').toISOString();
 
         const response = await AppointmentsService.fetchAppointments({
-          empresa: import.meta.env.VITE_COMPANY_ID || "662f5bb1f956857b8cd0d9c7",
+          empresa: (import.meta as any).env?.VITE_COMPANY_ID || "662f5bb1f956857b8cd0d9c7",
           fecha: dateForAPI
         });
 

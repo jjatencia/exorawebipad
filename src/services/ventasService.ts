@@ -36,8 +36,8 @@ const isTokenExpired = (token: string): boolean => {
 
 export const createVenta = async (appointment: Appointment, metodoPago: string): Promise<any> => {
   // Use development token if available, otherwise fallback to localStorage
-  const devToken = import.meta.env.VITE_DEV_BUSINESS_TOKEN;
-  const token = devToken || localStorage.getItem(import.meta.env.VITE_TOKEN_STORAGE_KEY || 'exora_auth_token');
+  const devToken = (import.meta as any).env?.VITE_DEV_BUSINESS_TOKEN;
+  const token = devToken || localStorage.getItem((import.meta as any).env?.VITE_TOKEN_STORAGE_KEY || 'exora_auth_token');
 
   if (!token) {
     throw new Error('No hay token de autenticación válido');
@@ -72,7 +72,7 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
   };
 
   // Debug info (non-sensitive only)
-  if (import.meta.env.DEV) {
+  if ((import.meta as any).env?.DEV) {
     console.log('=== PETICIÓN DE VENTA ===');
     console.log('URL:', 'https://api.exora.app/api/ventas');
     console.log('Token presente:', token ? 'SÍ' : 'NO');
@@ -89,14 +89,13 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
       body: JSON.stringify(ventaData)
     });
 
-    if (import.meta.env.DEV) {
+    if ((import.meta as any).env?.DEV) {
       console.log('=== RESPUESTA RECIBIDA ===');
       console.log('Status:', response.status);
     }
 
     if (!response.ok) {
-      const errorData = await response.text();
-      if (import.meta.env.DEV) {
+      if ((import.meta as any).env?.DEV) {
         console.log('Error response:', response.status);
       }
       throw new Error(`HTTP ${response.status}: Error en la venta`);
@@ -104,12 +103,12 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
 
     const responseData = await response.json();
 
-    if (import.meta.env.DEV) {
+    if ((import.meta as any).env?.DEV) {
       console.log('=== VENTA EXITOSA ===');
     }
     return responseData;
   } catch (error: any) {
-    if (import.meta.env.DEV) {
+    if ((import.meta as any).env?.DEV) {
       console.error('=== ERROR EN VENTA ===');
       console.error('Error message:', error?.message);
     }
