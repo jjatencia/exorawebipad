@@ -55,12 +55,14 @@ export const useSwipeGestureSimple = ({
     });
 
     setTimeout(() => {
+      // Resetear inmediatamente antes de cambiar
+      api.set(RESET_POSITION);
+      // Luego ejecutar el cambio
       if (isLeftSwipe) {
         onSwipeLeft();
       } else {
         onSwipeRight();
       }
-      api.set(RESET_POSITION);
     }, ANIMATION_DELAY);
   };
 
@@ -111,7 +113,8 @@ export const useSwipeGestureSimple = ({
         return;
       }
 
-      handleVerticalSwipe(my);
+      // Solo manejar swipe vertical si no hubo swipe horizontal
+      resetToCenter();
     } else {
       handleDragFeedback(mx, my);
     }
