@@ -1,0 +1,12 @@
+node_modules/.vite
+.git
+*.log
+.DS_Store
+src
+public
+vite.config.ts
+tsconfig.json
+eslint.config.js
+postcss.config.js
+tailwind.config.js
+README.md
