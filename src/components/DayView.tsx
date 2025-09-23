@@ -20,12 +20,44 @@ const DayView: React.FC<DayViewProps> = ({
   selectedDate,
   onAppointmentClick
 }) => {
-  // Generar slots de tiempo de 6:00 a 22:00 cada 30 minutos
+  // Calcular rango dinámico basado en las citas del día
+  const timeRange = useMemo(() => {
+    if (appointments.length === 0) {
+      return null; // Sin citas
+    }
+
+    let earliestHour = 23;
+    let latestHour = 0;
+
+    appointments.forEach(appointment => {
+      const appointmentDate = new Date(appointment.fecha);
+      const hour = appointmentDate.getHours();
+      const minute = appointmentDate.getMinutes();
+      const duration = parseInt(appointment.duracion || '60');
+
+      // Hora de inicio (redondeada hacia abajo)
+      const startHour = hour;
+
+      // Hora de fin (redondeada hacia arriba)
+      const endMinutes = minute + duration;
+      const endHour = hour + Math.floor(endMinutes / 60);
+      const finalEndHour = endMinutes % 60 > 0 ? endHour + 1 : endHour;
+
+      earliestHour = Math.min(earliestHour, startHour);
+      latestHour = Math.max(latestHour, finalEndHour);
+    });
+
+    return { start: earliestHour, end: latestHour };
+  }, [appointments]);
+
+  // Generar slots de tiempo dinámicos
   const timeSlots = useMemo((): TimeSlot[] => {
+    if (!timeRange) return [];
+
     const slots: TimeSlot[] = [];
-    for (let hour = 6; hour <= 22; hour++) {
+    for (let hour = timeRange.start; hour <= timeRange.end; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        if (hour === 22 && minute > 0) break; // Terminar a las 22:00
+        if (hour === timeRange.end && minute > 0) break; // Terminar en la hora exacta final
 
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const fullTimeString = `${timeString}:00`;
@@ -39,10 +71,12 @@ const DayView: React.FC<DayViewProps> = ({
       }
     }
     return slots;
-  }, []);
+  }, [timeRange]);
 
   // Procesar citas para posicionarlas en el timeline
   const processedAppointments = useMemo(() => {
+    if (!timeRange) return [];
+
     return appointments.map((appointment, index) => {
       const appointmentDate = new Date(appointment.fecha);
       const hour = appointmentDate.getHours();
@@ -51,8 +85,8 @@ const DayView: React.FC<DayViewProps> = ({
       // Usar la duración real de la cita (en minutos)
       const duration = parseInt(appointment.duracion || '60');
 
-      // Calcular posición exacta en minutos desde las 6:00
-      const startMinutes = (hour - 6) * 60 + minute;
+      // Calcular posición exacta en minutos desde el inicio del rango dinámico
+      const startMinutes = (hour - timeRange.start) * 60 + minute;
 
       // Calcular altura proporcional (2 píxeles por minuto para mejor visualización)
       const heightPx = Math.max(40, duration * 2);
@@ -67,8 +101,8 @@ const DayView: React.FC<DayViewProps> = ({
         heightPx,
         timeDisplay: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
       };
-    }).filter(apt => apt.hour >= 6 && apt.hour <= 22); // Solo mostrar citas en horario de trabajo
-  }, [appointments]);
+    });
+  }, [appointments, timeRange]);
 
   const handleAppointmentClick = (appointment: Appointment) => {
     if (onAppointmentClick) {
@@ -102,9 +136,17 @@ const DayView: React.FC<DayViewProps> = ({
 
       {/* Timeline */}
       <div className="flex-1 overflow-y-auto">
-        <div className="relative">
-          {/* Timeline continuo */}
-          <div className="relative" style={{ height: '960px' }}>
+        {!timeRange ? (
+          <div className="flex-1 flex items-center justify-center h-full">
+            <div className="text-center text-gray-500">
+              <p className="text-lg font-medium">No hay citas disponibles hoy</p>
+              <p className="text-sm mt-2">Selecciona otra fecha para ver las citas</p>
+            </div>
+          </div>
+        ) : (
+          <div className="relative">
+            {/* Timeline continuo */}
+            <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
             {/* Grid de horarios de fondo */}
             <div className="grid grid-cols-1 gap-0">
               {timeSlots.map((slot) => (
@@ -193,33 +235,33 @@ const DayView: React.FC<DayViewProps> = ({
           </div>
 
           {/* Línea de tiempo actual */}
-          <CurrentTimeLine selectedDate={selectedDate} />
+          <CurrentTimeLine selectedDate={selectedDate} timeRange={timeRange} />
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 // Componente para mostrar la línea de tiempo actual
-const CurrentTimeLine: React.FC<{ selectedDate: string }> = ({ selectedDate }) => {
+const CurrentTimeLine: React.FC<{ selectedDate: string; timeRange: { start: number; end: number } | null }> = ({ selectedDate, timeRange }) => {
   const currentTimePosition = useMemo(() => {
     const now = new Date();
     const today = new Date().toISOString().split('T')[0];
 
-    // Solo mostrar si es el día actual
-    if (selectedDate !== today) return null;
+    // Solo mostrar si es el día actual y hay un rango definido
+    if (selectedDate !== today || !timeRange) return null;
 
     const hour = now.getHours();
     const minute = now.getMinutes();
 
-    // Solo mostrar dentro del horario de trabajo (6:00-22:00)
-    if (hour < 6 || hour > 22) return null;
+    // Solo mostrar si la hora actual está dentro del rango dinámico
+    if (hour < timeRange.start || hour > timeRange.end) return null;
 
-    // Calcular posición exacta en minutos desde las 6:00 (2px por minuto)
-    const totalMinutesFromStart = (hour - 6) * 60 + minute;
+    // Calcular posición exacta en minutos desde el inicio del rango dinámico (2px por minuto)
+    const totalMinutesFromStart = (hour - timeRange.start) * 60 + minute;
 
     return totalMinutesFromStart * 2;
-  }, [selectedDate]);
+  }, [selectedDate, timeRange]);
 
   if (currentTimePosition === null) return null;
 
