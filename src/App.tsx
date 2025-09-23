@@ -16,17 +16,17 @@ const App: React.FC = () => {
     <Router basename="/">
       <div className="app font-main">
         <Routes>
-          <Route 
-            path="/login" 
-            element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} 
+          <Route
+            path="/login"
+            element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />}
           />
-          <Route 
-            path="/dashboard" 
-            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} 
+          <Route
+            path="/dashboard"
+            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
           />
-          <Route 
-            path="/" 
-            element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} 
+          <Route
+            path="/"
+            element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
           />
         </Routes>
         

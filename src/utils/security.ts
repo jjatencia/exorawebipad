@@ -1,7 +1,7 @@
 import CryptoJS from 'crypto-js';
 
 // Clave de cifrado (en producción debería venir de variables de entorno)
-const ENCRYPTION_KEY = process.env.VITE_ENCRYPTION_KEY || 'default-key-should-be-changed';
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'default-key-should-be-changed';
 
 /**
  * Utilidades de seguridad centralizadas

@@ -109,9 +109,9 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         zIndex: isActive ? 20 : 10,
         width: '90%',
         maxWidth: '380px',
-        height: '85%', // Reducir altura para móviles pequeños
-        maxHeight: '480px', // Reducir altura máxima
-        minHeight: '350px', // Reducir altura mínima para móviles pequeños
+        height: '80%', // Reducir más la altura para pantallas pequeñas
+        maxHeight: '420px', // Altura máxima reducida
+        minHeight: '280px', // Altura mínima más pequeña para consola móvil
         margin: '0 auto',
         position: 'relative',
         opacity: isDisabled ? 0.6 : 1,
