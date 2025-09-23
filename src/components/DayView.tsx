@@ -51,9 +51,10 @@ const DayView: React.FC<DayViewProps> = ({
       // Calcular posición en el grid (cada slot = 30min)
       const slotIndex = ((hour - 6) * 2) + (minute >= 30 ? 1 : 0);
 
-      // Calcular duración en slots (asumiendo 60min por defecto)
+      // Usar la duración real de la cita (en minutos)
       const duration = parseInt(appointment.duracion || '60');
       const durationSlots = Math.ceil(duration / 30);
+      const heightPx = Math.max(40, (duration / 30) * 60);
 
       return {
         ...appointment,
@@ -62,6 +63,8 @@ const DayView: React.FC<DayViewProps> = ({
         minute,
         slotIndex,
         durationSlots,
+        durationMinutes: duration,
+        heightPx,
         timeDisplay: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
       };
     }).filter(apt => apt.hour >= 6 && apt.hour <= 22); // Solo mostrar citas en horario de trabajo
@@ -135,7 +138,7 @@ const DayView: React.FC<DayViewProps> = ({
                         style={{
                           backgroundColor: appointment.pagada ? '#F0F9FF' : '#FCFFA8',
                           borderLeftColor: appointment.profesional.color || '#555BF6',
-                          minHeight: `${appointment.durationSlots * 30 - 4}px`
+                          minHeight: `${appointment.heightPx}px`
                         }}
                       >
                         <div className="space-y-1">
@@ -171,7 +174,7 @@ const DayView: React.FC<DayViewProps> = ({
                           {/* Precio y estado */}
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium" style={{ color: '#555BF6' }}>
-                              €{appointment.importe.toFixed(2)}
+                              €{appointment.importe.toFixed(2)} ({appointment.durationMinutes}min)
                             </span>
                             {appointment.pagada && (
                               <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
