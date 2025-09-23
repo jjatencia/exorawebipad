@@ -105,13 +105,15 @@ export const useDashboard = (): UseDashboardResult => {
       const appointmentIndex = filteredAppointments.findIndex(apt => apt._id === appointment._id);
       if (appointmentIndex !== -1) {
         setCurrentIndex(appointmentIndex);
+        // Cambiar automáticamente a vista tarjetas
+        setViewMode(ViewMode.CARDS);
         // Si no está en modo pago y la cita no está pagada, activar modo pago
         if (!paymentMode && !appointment.pagada) {
           setPaymentMode(true);
         }
       }
     },
-    [filteredAppointments, setCurrentIndex, paymentMode]
+    [filteredAppointments, setCurrentIndex, setViewMode, paymentMode]
   );
 
   const nextAppointment = useCallback(() => {
