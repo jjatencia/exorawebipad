@@ -7,7 +7,6 @@ import {
   CommentIcon,
   DiscountIcon,
   LocationIcon,
-  PaymentIcon,
   PhoneIcon,
   ServiceIcon,
   VariantIcon
