@@ -39,33 +39,35 @@ const Dashboard: React.FC = () => {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--exora-background)' }}>
       <header className="bg-white shadow-sm border-b border-gray-200 z-[10000]">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-md mx-auto px-4 py-3">
+          {/* Primera fila: Saludo y Logout */}
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">
                 Hola, {userName}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 {filteredAppointments.length} citas {showPaidOnly ? 'pagadas' : 'pendientes'}
               </p>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <ViewModeSelector
-                currentMode={viewMode}
-                onModeChange={handlers.changeViewMode}
-              />
+            <button
+              onClick={handlers.logout}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 flex-shrink-0"
+              title="Cerrar sesión"
+            >
+              <LogoutIcon size={20} />
+            </button>
+          </div>
 
-              <DateSelector selectedDate={currentDate} onDateChange={handlers.changeDate} />
+          {/* Segunda fila: Controles */}
+          <div className="flex items-center justify-between space-x-2">
+            <ViewModeSelector
+              currentMode={viewMode}
+              onModeChange={handlers.changeViewMode}
+            />
 
-              <button
-                onClick={handlers.logout}
-                className="text-gray-500 hover:text-gray-700 transition-colors p-2"
-                title="Cerrar sesión"
-              >
-                <LogoutIcon size={20} />
-              </button>
-            </div>
+            <DateSelector selectedDate={currentDate} onDateChange={handlers.changeDate} />
           </div>
         </div>
       </header>

@@ -33,22 +33,22 @@ const ViewModeSelector: React.FC<ViewModeSelectorProps> = ({
   ];
 
   return (
-    <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+    <div className="flex items-center space-x-0.5 bg-gray-100 rounded-lg p-1">
       {viewModes.map(({ mode, icon: Icon, label, title }) => (
         <button
           key={mode}
           onClick={() => onModeChange(mode)}
           title={title}
           className={`
-            flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200
+            flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-200
             ${currentMode === mode
               ? 'bg-white text-exora-primary shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }
           `}
         >
-          <Icon size={16} />
-          <span className="hidden sm:inline">{label}</span>
+          <Icon size={14} />
+          <span className="hidden sm:inline text-xs">{label}</span>
         </button>
       ))}
     </div>
