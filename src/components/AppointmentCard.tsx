@@ -28,6 +28,17 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 }) => {
   const isDisabled = isAppointmentDisabled(appointment);
 
+  // Debug saldo en móvil
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent)) {
+      console.log('Mobile detected - Appointment user data:', {
+        nombre: appointment.usuario.nombre,
+        saldoMonedero: appointment.usuario.saldoMonedero,
+        pagada: appointment.pagada
+      });
+    }
+  }, [appointment]);
+
   // Probar API de promociones (solo en desarrollo y si hay promociones)
   useEffect(() => {
     if ((import.meta as any).env?.DEV && appointment.promocion && appointment.promocion.length > 0) {
@@ -121,7 +132,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           ) : (
             <div className="flex justify-center items-center mb-3">
               <span className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-                Saldo: €{appointment.usuario.saldoMonedero.toFixed(2)}
+                Saldo: €{(appointment.usuario.saldoMonedero || 0).toFixed(2)}
               </span>
             </div>
           )}

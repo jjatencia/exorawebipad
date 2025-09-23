@@ -63,15 +63,22 @@ export const useSwipeGestureSimple = ({
 
       setTimeout(() => {
         try {
+          // Log para debugging móvil
+          console.log('Executing swipe:', isLeftSwipe ? 'left' : 'right');
+
           // Ejecutar el cambio primero
           if (isLeftSwipe) {
             onSwipeLeft();
           } else {
             onSwipeRight();
           }
+
+          console.log('Swipe executed successfully, resetting position...');
+
           // Luego resetear después de un pequeño delay
           setTimeout(() => {
             api.set(RESET_POSITION);
+            console.log('Position reset complete');
           }, 50);
         } catch (error) {
           console.error('Swipe execution error:', error);
