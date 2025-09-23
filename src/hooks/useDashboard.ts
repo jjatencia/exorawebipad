@@ -25,7 +25,7 @@ interface UseDashboardResult {
     previousAppointment: () => void;
     refreshAppointments: () => void;
     initiatePaymentMode: () => void;
-    completePayment: (appointmentId: string, metodoPago: string) => Promise<void>;
+    completePayment: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => Promise<void>;
     cancelPayment: () => void;
     logout: () => void;
   };
@@ -135,7 +135,7 @@ export const useDashboard = (): UseDashboardResult => {
   }, [currentIndex, filteredAppointments, paymentMode, resetPaymentMode]);
 
   const completePayment = useCallback(
-    async (_appointmentId: string, metodoPago: string) => {
+    async (_appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => {
       const currentAppointment = filteredAppointments[currentIndex];
 
       if (!currentAppointment) {
@@ -146,7 +146,10 @@ export const useDashboard = (): UseDashboardResult => {
       try {
         toast.loading('Procesando pago...');
 
-        await createVenta(currentAppointment, metodoPago);
+        // Usar la cita editada si está disponible, caso contrario usar la original
+        const appointmentToProcess = editedAppointment || currentAppointment;
+
+        await createVenta(appointmentToProcess, metodoPago);
 
         toast.dismiss();
         toast.success('Pago completado exitosamente');

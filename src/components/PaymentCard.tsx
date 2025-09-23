@@ -14,7 +14,7 @@ import {
 
 interface PaymentCardProps {
   appointment: Appointment;
-  onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
+  onCompletePayment?: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => void;
 }
 
 const PaymentCard: React.FC<PaymentCardProps> = ({
@@ -166,7 +166,28 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
       return;
     }
     if (onCompletePayment) {
-      onCompletePayment(appointment._id, selectedPaymentMethod);
+      // Detectar si hay cambios comparando con los valores originales
+      const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
+      const hasVariantChanges = variantesSeleccionadas.length !== (appointment.variantes?.length || 0) ||
+        variantesSeleccionadas.some(v => !(appointment.variantes?.some(av => av._id === v._id)));
+      const hasPromocionChanges = promocionesSeleccionadas.length !== (appointment.promocion?.length || 0) ||
+        promocionesSeleccionadas.some(p => !appointment.promocion?.includes(p)) ||
+        appointment.promocion?.some(p => !promocionesSeleccionadas.includes(p));
+
+      let editedAppointment: Appointment | undefined;
+
+      // Si hay cambios, crear un appointment actualizado
+      if (hasServiceChanges || hasVariantChanges || hasPromocionChanges) {
+        editedAppointment = {
+          ...appointment,
+          servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
+          variantes: variantesSeleccionadas,
+          promocion: promocionesSeleccionadas,
+          importe: precioCalculado
+        };
+      }
+
+      onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
     }
   };
 
