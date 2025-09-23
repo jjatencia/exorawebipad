@@ -107,11 +107,11 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         boxShadow: isDisabled ? '0 2px 8px rgba(0, 0, 0, 0.04)' : '0 4px 15px rgba(0, 0, 0, 0.08)',
         cursor: isDisabled ? 'default' : 'pointer',
         zIndex: isActive ? 20 : 10,
-        width: '90%',
-        maxWidth: '380px',
-        height: '80%', // Reducir más la altura para pantallas pequeñas
-        maxHeight: '420px', // Altura máxima reducida
-        minHeight: '280px', // Altura mínima más pequeña para consola móvil
+        width: '95%',
+        maxWidth: '420px',
+        height: '88%', // Mayor altura para aprovechar mejor el espacio disponible
+        maxHeight: '520px', // Altura máxima más generosa sin invadir la navegación inferior
+        minHeight: '320px', // Mantiene una presencia visual adecuada incluso en pantallas pequeñas
         margin: '0 auto',
         position: 'relative',
         opacity: isDisabled ? 0.6 : 1,
