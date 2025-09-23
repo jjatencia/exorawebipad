@@ -107,20 +107,13 @@ const Dashboard: React.FC = () => {
                   onCompletePayment={handlers.completePayment}
                 />
               </div>
-            ) : viewMode === ViewMode.DAY ? (
+            ) : (
               <div className="flex-1 overflow-hidden">
                 <DayView
                   appointments={filteredAppointments}
                   selectedDate={currentDate}
                   onAppointmentClick={handlers.selectAppointment}
                 />
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <p className="text-lg font-medium">Vista de semana</p>
-                  <p className="text-sm mt-2">Próximamente disponible</p>
-                </div>
               </div>
             )}
           </>

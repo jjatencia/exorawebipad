@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewMode } from '../types';
-import { CardsIcon, DayIcon, WeekIcon } from './icons';
+import { CardsIcon, DayIcon } from './icons';
 
 interface ViewModeSelectorProps {
   currentMode: ViewMode;
@@ -23,12 +23,6 @@ const ViewModeSelector: React.FC<ViewModeSelectorProps> = ({
       icon: DayIcon,
       label: 'Día',
       title: 'Vista de día'
-    },
-    {
-      mode: ViewMode.WEEK,
-      icon: WeekIcon,
-      label: 'Semana',
-      title: 'Vista de semana'
     }
   ];
 
@@ -40,15 +34,15 @@ const ViewModeSelector: React.FC<ViewModeSelectorProps> = ({
           onClick={() => onModeChange(mode)}
           title={title}
           className={`
-            flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all duration-200
+            flex items-center space-x-2 px-3 py-2.5 rounded-md text-xs font-medium transition-all duration-200 min-h-[44px]
             ${currentMode === mode
               ? 'bg-white text-exora-primary shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }
           `}
         >
-          <Icon size={14} />
-          <span className="hidden sm:inline text-xs">{label}</span>
+          <Icon size={18} />
+          <span className="hidden sm:inline text-sm">{label}</span>
         </button>
       ))}
     </div>
