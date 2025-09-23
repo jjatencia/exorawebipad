@@ -147,7 +147,7 @@ const DayView: React.FC<DayViewProps> = ({
           <div className="relative">
             {/* Timeline continuo */}
             <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
-            {/* Grid de horarios de fondo */}
+              {/* Grid de horarios de fondo */}
             <div className="grid grid-cols-1 gap-0">
               {timeSlots.map((slot) => (
                 <div
@@ -232,12 +232,13 @@ const DayView: React.FC<DayViewProps> = ({
                 );
               })}
             </div>
-          </div>
+            </div>
 
-          {/* Línea de tiempo actual */}
-          <CurrentTimeLine selectedDate={selectedDate} timeRange={timeRange} />
-        </div>
-      )}
+            {/* Línea de tiempo actual */}
+            <CurrentTimeLine selectedDate={selectedDate} timeRange={timeRange} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
