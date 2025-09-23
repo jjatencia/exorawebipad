@@ -119,9 +119,6 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
     isDisabled ? 'bg-gray-100 text-gray-400' : 'bg-gray-50 text-gray-700'
   } rounded-2xl px-3 py-2`;
   const infoInlineRowClass = 'flex flex-wrap items-center gap-x-2 gap-y-1';
-  const infoInlineLabelClass = `text-[12px] font-semibold ${
-    isDisabled ? 'text-gray-400' : 'text-gray-500'
-  }`;
   const infoMutedClass = isDisabled ? 'text-gray-400' : 'text-gray-600';
   const infoValueClass = `text-[13px] font-semibold leading-snug tracking-tight ${
     isDisabled ? 'text-gray-400' : 'text-gray-800'
