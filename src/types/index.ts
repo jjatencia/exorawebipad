@@ -107,11 +107,13 @@ export interface AppointmentState {
   currentDate: string;
   currentIndex: number;
   showPaidOnly: boolean;
+  viewMode: ViewMode;
   isLoading: boolean;
   error: string | null;
   fetchAppointments: (date: string) => Promise<void>;
   setCurrentIndex: (index: number) => void;
   setCurrentDate: (date: string) => void;
+  setViewMode: (mode: ViewMode) => void;
   toggleShowPaid: () => void;
   clearError: () => void;
   clearCache: () => void;
@@ -131,4 +133,10 @@ export interface AuthResponse {
 export interface ApiError {
   message: string;
   status?: number;
+}
+
+export enum ViewMode {
+  CARDS = 'cards',
+  DAY = 'day',
+  WEEK = 'week'
 }

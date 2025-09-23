@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
-import { AppointmentState, Appointment } from '../types';
+import { AppointmentState, Appointment, ViewMode } from '../types';
 import { AppointmentsService } from '../services/appointmentsService';
 import { formatDateForAPILocal } from '../utils/helpers';
 
@@ -61,6 +61,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   currentDate: formatDateForAPILocal(new Date()),
   currentIndex: 0,
   showPaidOnly: false,
+  viewMode: ViewMode.CARDS,
   isLoading: false,
   error: null,
 
@@ -166,6 +167,10 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   setCurrentDate: (date: string) => {
     set({ currentDate: date });
+  },
+
+  setViewMode: (mode: ViewMode) => {
+    set({ viewMode: mode });
   },
 
   toggleShowPaid: () => {

@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useAppointmentStore } from '../stores/appointmentStore';
 // import { formatDateForAPILocal } from '../utils/helpers'; // No longer needed after removing date restriction
 import { createVenta } from '../services/ventasService';
-import { Appointment } from '../types';
+import { Appointment, ViewMode } from '../types';
 
 interface UseDashboardResult {
   userName: string;
@@ -13,6 +13,7 @@ interface UseDashboardResult {
   paymentMode: boolean;
   currentDate: string;
   currentIndex: number;
+  viewMode: ViewMode;
   isLoading: boolean;
   error: string | null;
   showPaidOnly: boolean;
@@ -21,6 +22,7 @@ interface UseDashboardResult {
   canGoForward: boolean;
   handlers: {
     changeDate: (date: string) => void;
+    changeViewMode: (mode: ViewMode) => void;
     nextAppointment: () => void;
     previousAppointment: () => void;
     refreshAppointments: () => void;
@@ -28,6 +30,7 @@ interface UseDashboardResult {
     completePayment: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => Promise<void>;
     cancelPayment: () => void;
     logout: () => void;
+    selectAppointment: (appointment: Appointment) => void;
   };
 }
 
@@ -41,12 +44,14 @@ export const useDashboard = (): UseDashboardResult => {
     filteredAppointments,
     currentDate,
     currentIndex,
+    viewMode,
     showPaidOnly,
     isLoading,
     error,
     fetchAppointments,
     setCurrentIndex,
     setCurrentDate,
+    setViewMode,
     toggleShowPaid
   } = useAppointmentStore();
 
@@ -81,6 +86,32 @@ export const useDashboard = (): UseDashboardResult => {
       setCurrentDate(newDate);
     },
     [setCurrentDate]
+  );
+
+  const changeViewMode = useCallback(
+    (mode: ViewMode) => {
+      setViewMode(mode);
+      // Cerrar modo pago al cambiar vista
+      if (paymentMode) {
+        setPaymentMode(false);
+      }
+    },
+    [setViewMode, paymentMode]
+  );
+
+  const selectAppointment = useCallback(
+    (appointment: Appointment) => {
+      // Encontrar el índice en la lista filtrada
+      const appointmentIndex = filteredAppointments.findIndex(apt => apt._id === appointment._id);
+      if (appointmentIndex !== -1) {
+        setCurrentIndex(appointmentIndex);
+        // Si no está en modo pago y la cita no está pagada, activar modo pago
+        if (!paymentMode && !appointment.pagada) {
+          setPaymentMode(true);
+        }
+      }
+    },
+    [filteredAppointments, setCurrentIndex, paymentMode]
   );
 
   const nextAppointment = useCallback(() => {
@@ -207,6 +238,7 @@ export const useDashboard = (): UseDashboardResult => {
     paymentMode,
     currentDate,
     currentIndex,
+    viewMode,
     isLoading,
     error,
     showPaidOnly,
@@ -215,13 +247,15 @@ export const useDashboard = (): UseDashboardResult => {
     canGoForward,
     handlers: {
       changeDate,
+      changeViewMode,
       nextAppointment,
       previousAppointment,
       refreshAppointments,
       initiatePaymentMode,
       completePayment,
       cancelPayment,
-      logout
+      logout,
+      selectAppointment
     }
   };
 };

@@ -1,10 +1,13 @@
 import React from 'react';
 import CardStack from '../components/CardStack';
+import DayView from '../components/DayView';
 import DateSelector from '../components/DateSelector';
+import ViewModeSelector from '../components/ViewModeSelector';
 import BottomNavigation from '../components/BottomNavigation';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { LogoutIcon } from '../components/icons';
 import { useDashboard } from '../hooks/useDashboard';
+import { ViewMode } from '../types';
 
 const Dashboard: React.FC = () => {
   const {
@@ -13,6 +16,7 @@ const Dashboard: React.FC = () => {
     paymentMode,
     currentDate,
     currentIndex,
+    viewMode,
     isLoading,
     error,
     showPaidOnly,
@@ -46,7 +50,12 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <ViewModeSelector
+                currentMode={viewMode}
+                onModeChange={handlers.changeViewMode}
+              />
+
               <DateSelector selectedDate={currentDate} onDateChange={handlers.changeDate} />
 
               <button
@@ -83,30 +92,51 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-start justify-center px-4 pt-8">
-            <CardStack
-              appointments={filteredAppointments}
-              currentIndex={currentIndex}
-              onNext={handlers.nextAppointment}
-              onPrevious={handlers.previousAppointment}
-              onRefresh={handlers.refreshAppointments}
-              paymentMode={paymentMode}
-              onCompletePayment={handlers.completePayment}
-            />
-          </div>
+          <>
+            {viewMode === ViewMode.CARDS ? (
+              <div className="flex-1 flex items-start justify-center px-4 pt-8">
+                <CardStack
+                  appointments={filteredAppointments}
+                  currentIndex={currentIndex}
+                  onNext={handlers.nextAppointment}
+                  onPrevious={handlers.previousAppointment}
+                  onRefresh={handlers.refreshAppointments}
+                  paymentMode={paymentMode}
+                  onCompletePayment={handlers.completePayment}
+                />
+              </div>
+            ) : viewMode === ViewMode.DAY ? (
+              <div className="flex-1 overflow-hidden">
+                <DayView
+                  appointments={filteredAppointments}
+                  selectedDate={currentDate}
+                  onAppointmentClick={handlers.selectAppointment}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <p className="text-lg font-medium">Vista de semana</p>
+                  <p className="text-sm mt-2">Próximamente disponible</p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      <div className="z-10">
-        <BottomNavigation
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          onPrevious={paymentMode ? undefined : handlers.previousAppointment}
-          onNext={paymentMode ? undefined : handlers.nextAppointment}
-          onAdd={handlers.initiatePaymentMode}
-          disabled={navigationDisabled}
-        />
-      </div>
+      {viewMode === ViewMode.CARDS && (
+        <div className="z-10">
+          <BottomNavigation
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onPrevious={paymentMode ? undefined : handlers.previousAppointment}
+            onNext={paymentMode ? undefined : handlers.nextAppointment}
+            onAdd={handlers.initiatePaymentMode}
+            disabled={navigationDisabled}
+          />
+        </div>
+      )}
     </div>
   );
 };
