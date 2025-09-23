@@ -24,10 +24,10 @@ const CONTAINER_STYLE = {
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
   padding: '1rem',
-  paddingBottom: '140px', // Más espacio para el botón inferior
+  paddingBottom: '110px', // Espacio suficiente para el botón inferior sin dejar hueco excesivo
   // Altura ajustada para móviles pequeños y cuando se abre consola
-  maxHeight: 'calc(100vh - 240px)', // Más espacio restado para header y botón
-  minHeight: '300px' // Altura mínima más pequeña para pantallas muy pequeñas
+  maxHeight: 'calc(100vh - 200px)', // Reduce el espacio restado para permitir tarjetas más altas
+  minHeight: '320px' // Altura mínima ligeramente mayor para mantener proporción agradable
 };
 
 const CARD_STYLES = {
