@@ -246,6 +246,8 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
+Si el build falla con un error parecido a `crypto.getRandomValues is not a function`, asegúrate de estar utilizando Node.js 18.17 o superior (Vite 5 requiere las APIs de Web Crypto disponibles a partir de esa versión). Actualiza tu entorno o configura `nvm`/`volta` para usar al menos Node 18 antes de ejecutar `npm run build`.
+
 ### Issues de PWA
 - Verifica que el Service Worker esté registrado en DevTools
 - Limpia cache del navegador si hay problemas
