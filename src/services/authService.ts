@@ -1,4 +1,4 @@
-import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+import { API_BASE_URL, STORAGE_KEYS } from '../config/environment';
 import { SecurityUtils, SecureStorage } from '../utils/security';
 import { isValidEmail } from '../utils/helpers';
 

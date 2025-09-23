@@ -96,7 +96,7 @@ const Dashboard: React.FC = () => {
         ) : (
           <>
             {viewMode === ViewMode.CARDS ? (
-              <div className="flex-1 flex items-start justify-center px-4 pt-8">
+              <div className="flex-1 flex items-center justify-center">
                 <CardStack
                   appointments={filteredAppointments}
                   currentIndex={currentIndex}
@@ -121,7 +121,7 @@ const Dashboard: React.FC = () => {
       </main>
 
       {viewMode === ViewMode.CARDS && (
-        <div className="z-10">
+        <div className="z-10 flex-shrink-0">
           <BottomNavigation
             canGoBack={canGoBack}
             canGoForward={canGoForward}

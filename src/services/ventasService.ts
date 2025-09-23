@@ -72,11 +72,7 @@ const calcularDescuentoPromociones = async (appointment: Appointment): Promise<{
     const importeConDescuento = Math.max(0, appointment.importe - descuentoTotal);
 
     if ((import.meta as any).env?.DEV) {
-      console.log('=== CÁLCULO DE DESCUENTOS ===');
-      console.log('Importe original:', appointment.importe);
-      console.log('Promociones aplicadas:', promocionesAplicadas.length);
-      console.log('Descuento total:', descuentoTotal);
-      console.log('Importe final:', importeConDescuento);
+     
     }
 
     return {
@@ -142,12 +138,7 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
 
   // Debug info (non-sensitive only)
   if ((import.meta as any).env?.DEV) {
-    console.log('=== PETICIÓN DE VENTA ===');
-    console.log('URL:', 'https://api.exora.app/api/ventas');
-    console.log('Token presente:', token ? 'SÍ' : 'NO');
-    console.log('Importe original:', appointment.importe);
-    console.log('Importe con descuento:', importeConDescuento);
-    console.log('Descuento aplicado:', descuentoTotal);
+
   }
 
   try {
@@ -162,13 +153,12 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     });
 
     if ((import.meta as any).env?.DEV) {
-      console.log('=== RESPUESTA RECIBIDA ===');
-      console.log('Status:', response.status);
+   
     }
 
     if (!response.ok) {
       if ((import.meta as any).env?.DEV) {
-        console.log('Error response:', response.status);
+        
       }
       throw new Error(`HTTP ${response.status}: Error en la venta`);
     }
@@ -176,7 +166,7 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
     const responseData = await response.json();
 
     if ((import.meta as any).env?.DEV) {
-      console.log('=== VENTA EXITOSA ===');
+      
     }
     return responseData;
   } catch (error: any) {

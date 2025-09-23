@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+import { API_BASE_URL, STORAGE_KEYS, environment } from '../config/environment';
 import { Appointment } from '../types';
 import { SecurityUtils } from '../utils/security';
 
@@ -22,10 +22,7 @@ apiClient.interceptors.request.use(
     }
 
     // Solo debug en desarrollo
-    if (process.env.NODE_ENV === 'development' && config.url?.includes('ventas')) {
-      console.log('=== REQUEST DEBUG ===');
-      console.log('URL:', config.url);
-      console.log('Method:', config.method);
+    if (environment.enableDebugLogs && config.url?.includes('ventas')) {
       // No loggear headers que pueden contener tokens
     }
 

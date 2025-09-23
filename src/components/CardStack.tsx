@@ -15,19 +15,21 @@ interface CardStackProps {
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
 }
 
-// Style constants - Hacer las tarjetas más grandes y mejor distribuidas
+// Style constants - Maximizar el espacio disponible entre header y footer
 const CONTAINER_STYLE = {
-  // Usar más espacio para las tarjetas pero dejar espacio para botón inferior
+  // Usar todo el espacio disponible entre header y footer
   flex: '1',
   display: 'flex',
   flexDirection: 'column' as const,
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
-  padding: '1rem',
-  paddingBottom: '140px', // Más espacio para el botón inferior
-  // Altura ajustada para móviles pequeños y cuando se abre consola
-  maxHeight: 'calc(100vh - 240px)', // Más espacio restado para header y botón
-  minHeight: '300px' // Altura mínima más pequeña para pantallas muy pequeñas
+  padding: '0', // Sin padding para maximizar espacio
+  paddingBottom: '0', // Sin padding inferior, el footer se maneja desde Dashboard
+  paddingTop: '0', // Sin padding superior
+  // Usar toda la altura disponible del contenedor flex
+  height: '100%',
+  maxHeight: '100%', // Usar todo el espacio disponible
+  minHeight: '100%' // Asegurar que use todo el espacio
 };
 
 const CARD_STYLES = {

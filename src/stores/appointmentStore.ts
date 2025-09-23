@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { AppointmentState, Appointment, ViewMode } from '../types';
 import { AppointmentsService } from '../services/appointmentsService';
 import { formatDateForAPILocal } from '../utils/helpers';
+import { MOCK_APPOINTMENTS } from '../mocks/appointments';
 
 // Memoization cache for expensive filtering operations
 let filterCache = new Map<string, Appointment[]>();
@@ -10,6 +11,24 @@ const CACHE_MAX_SIZE = 10;
 
 // Request debouncing to prevent duplicate API calls
 let activeRequests = new Map<string, Promise<any>>();
+
+// Transform mock data to match expected format
+const transformMockData = (mockAppointments: any[]): Appointment[] => {
+  return mockAppointments.map(appointment => ({
+    ...appointment,
+    // Transform string comments to array format
+    comentarios: appointment.comentarios ? [appointment.comentarios] : [],
+    // Ensure user object has comments as array
+    usuario: {
+      ...appointment.usuario,
+      comentarios: appointment.usuario?.comentarios 
+        ? (Array.isArray(appointment.usuario.comentarios) 
+           ? appointment.usuario.comentarios 
+           : [appointment.usuario.comentarios])
+        : []
+    }
+  }));
+};
 
 const filterAndSortAppointments = (appointments: Appointment[], forceRefresh = false) => {
   // Create cache key based on appointments data and current time (rounded to 5 min intervals)
@@ -104,14 +123,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         // Filtrar y ordenar citas según las reglas de negocio
         const filteredAndSorted = filterAndSortAppointments(response.citas);
 
-        // Log JSON examples for price analysis
-        if (response.citas.length > 0 && (import.meta as any).env?.DEV) {
-          console.log('=== EJEMPLOS JSON CITAS ===');
-          response.citas.forEach((cita, index) => {
-            console.log(`--- CITA ${index + 1} (${cita.usuario.nombre}) ---`);
-            console.log(JSON.stringify(cita, null, 2));
-          });
-        }
+
 
         set({
           appointments: response.citas,
@@ -137,16 +149,47 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     } catch (error: any) {
       console.error('Error fetching appointments:', error);
 
-      set({
-        appointments: [],
-        filteredAppointments: [],
-        currentDate: date,
-        currentIndex: 0,
-        isLoading: false,
-        error: error.message || 'Error al cargar las citas'
-      });
+      // Fallback to mock data when API fails
+      try {
+        console.log('Using mock data as fallback');
+        const mockData = transformMockData(MOCK_APPOINTMENTS);
+        
+        // Filter mock data by date
+        const targetDate = new Date(date);
+        const filteredMockData = mockData.filter(appointment => {
+          const appointmentDate = new Date((appointment as any).apiDate);
+          return appointmentDate.toDateString() === targetDate.toDateString();
+        });
 
-      toast.error(error.message || 'Error al cargar las citas');
+        const filteredAndSorted = filterAndSortAppointments(filteredMockData);
+
+        set({
+          appointments: filteredMockData,
+          filteredAppointments: filteredAndSorted,
+          currentDate: date,
+          currentIndex: 0,
+          isLoading: false,
+          error: null
+        });
+
+        if (filteredMockData.length === 0) {
+          toast('No hay citas para este día (datos de prueba)', { icon: 'ℹ️' });
+        } else {
+          toast.success(`${filteredAndSorted.length} citas cargadas (datos de prueba)`);
+        }
+      } catch (mockError) {
+        console.error('Error loading mock data:', mockError);
+        set({
+          appointments: [],
+          filteredAppointments: [],
+          currentDate: date,
+          currentIndex: 0,
+          isLoading: false,
+          error: error.message || 'Error al cargar las citas'
+        });
+
+        toast.error(error.message || 'Error al cargar las citas');
+      }
     } finally {
       // Clean up active request
       activeRequests.delete(requestKey);
@@ -176,7 +219,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   toggleShowPaid: () => {
     // Esta función ya no es necesaria pero la mantenemos por compatibilidad
     // Ahora siempre mostramos todas las citas
-    console.log('toggleShowPaid: Mostrando todas las citas del día');
+    // Mostrando todas las citas del día
   },
 
   clearError: () => {

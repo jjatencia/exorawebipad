@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppointmentStore } from '../stores/appointmentStore';
-import { MOCK_APPOINTMENTS } from '../utils/constants';
+import { MOCK_APPOINTMENTS } from '../mocks/appointments';
 
 const DebugInfo: React.FC = () => {
   const { appointments, currentDate, isLoading } = useAppointmentStore();

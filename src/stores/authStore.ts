@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { AuthState, User } from '../types';
-import { STORAGE_KEYS } from '../utils/constants';
+import { STORAGE_KEYS } from '../config/environment';
 import { AuthService } from '../services/authService';
 
 export const useAuthStore = create<AuthState>((set) => ({
