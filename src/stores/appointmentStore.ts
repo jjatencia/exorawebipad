@@ -15,7 +15,7 @@ const filterAndSortAppointments = (appointments: Appointment[], forceRefresh = f
   // Create cache key based on appointments data and current time (rounded to 5 min intervals)
   const now = new Date();
   const timeSlot = Math.floor(now.getTime() / (5 * 60 * 1000)); // 5-minute intervals
-  const cacheKey = `${appointments.length}-${timeSlot}-${appointments.map(a => `${a._id}-${a.pagada}`).join(',')}`;
+  const cacheKey = `${appointments.length}-${timeSlot}-${appointments.map(a => `${a._id}-${a.pagada}-${a.usuario.saldoMonedero || 0}`).join(',')}`;
 
   // Check cache first (unless force refresh)
   if (!forceRefresh && filterCache.has(cacheKey)) {
