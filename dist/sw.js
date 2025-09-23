@@ -84,10 +84,22 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-BYyfeyF_.js",
+    "url": "assets/index-DafujoJG.css",
     "revision": null
   }, {
-    "url": "assets/index-DafujoJG.css",
+    "url": "assets/index-Dhybm7KA.js",
+    "revision": null
+  }, {
+    "url": "assets/router-DOm5wjR5.js",
+    "revision": null
+  }, {
+    "url": "assets/ui-DJNPBiSa.js",
+    "revision": null
+  }, {
+    "url": "assets/utils-Dq7FJXLK.js",
+    "revision": null
+  }, {
+    "url": "assets/vendor-BnAv-nsF.js",
     "revision": null
   }, {
     "url": "Captura de pantalla 2025-09-16 a las 23.43.22.png",
@@ -109,7 +121,7 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "0ec955226f2be5df78c4f4926334c513"
+    "revision": "aab81aab7a0b8ed6227f3ee5f307497f"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"

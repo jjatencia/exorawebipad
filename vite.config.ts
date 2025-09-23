@@ -17,9 +17,15 @@ export default defineConfig({
     }
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@react-spring/web', '@use-gesture/react'],
+          utils: ['axios', 'crypto-js', 'zod', 'zustand'],
+        },
       },
     },
   },
