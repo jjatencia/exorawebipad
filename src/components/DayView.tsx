@@ -48,21 +48,21 @@ const DayView: React.FC<DayViewProps> = ({
       const hour = appointmentDate.getHours();
       const minute = appointmentDate.getMinutes();
 
-      // Calcular posición en el grid (cada slot = 30min)
-      const slotIndex = ((hour - 6) * 2) + (minute >= 30 ? 1 : 0);
-
       // Usar la duración real de la cita (en minutos)
       const duration = parseInt(appointment.duracion || '60');
-      const durationSlots = Math.ceil(duration / 30);
-      const heightPx = Math.max(40, (duration / 30) * 60);
+
+      // Calcular posición exacta en minutos desde las 6:00
+      const startMinutes = (hour - 6) * 60 + minute;
+
+      // Calcular altura proporcional (2 píxeles por minuto para mejor visualización)
+      const heightPx = Math.max(40, duration * 2);
 
       return {
         ...appointment,
         index,
         hour,
         minute,
-        slotIndex,
-        durationSlots,
+        startMinutes,
         durationMinutes: duration,
         heightPx,
         timeDisplay: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
@@ -103,18 +103,14 @@ const DayView: React.FC<DayViewProps> = ({
       {/* Timeline */}
       <div className="flex-1 overflow-y-auto">
         <div className="relative">
-          {/* Grid de horarios */}
-          <div className="grid grid-cols-1 gap-0">
-            {timeSlots.map((slot, slotIndex) => {
-              // Buscar citas que empiecen en este slot
-              const appointmentsInSlot = processedAppointments.filter(
-                apt => apt.slotIndex === slotIndex
-              );
-
-              return (
+          {/* Timeline continuo */}
+          <div className="relative" style={{ height: '960px' }}>
+            {/* Grid de horarios de fondo */}
+            <div className="grid grid-cols-1 gap-0">
+              {timeSlots.map((slot) => (
                 <div
                   key={`${slot.hour}-${slot.minute}`}
-                  className="relative border-b border-gray-100 min-h-[60px] flex"
+                  className="border-b border-gray-100 h-[60px] flex"
                 >
                   {/* Columna de hora */}
                   <div className="w-16 flex-shrink-0 p-2 border-r border-gray-200">
@@ -128,30 +124,45 @@ const DayView: React.FC<DayViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Columna de citas */}
-                  <div className="flex-1 relative p-1">
-                    {appointmentsInSlot.map((appointment) => (
-                      <button
-                        key={appointment._id}
-                        onClick={() => handleAppointmentClick(appointment)}
-                        className="w-full text-left p-2 rounded-lg mb-1 transition-all duration-200 hover:shadow-md border-l-4"
-                        style={{
-                          backgroundColor: appointment.pagada ? '#F0F9FF' : '#FCFFA8',
-                          borderLeftColor: appointment.profesional.color || '#555BF6',
-                          minHeight: `${appointment.heightPx}px`
-                        }}
-                      >
-                        <div className="space-y-1">
-                          {/* Hora y cliente */}
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-600">
-                              {appointment.timeDisplay}
-                            </span>
-                            <span className="text-sm font-semibold" style={{ color: '#555BF6' }}>
-                              {appointment.usuario.nombre}
-                            </span>
-                          </div>
+                  {/* Columna de contenido */}
+                  <div className="flex-1"></div>
+                </div>
+              ))}
+            </div>
 
+            {/* Citas posicionadas absolutamente */}
+            <div className="absolute top-0 left-16 right-0 bottom-0">
+              {processedAppointments.map((appointment) => {
+                // Posición vertical exacta basada en minutos reales (2px por minuto)
+                const topPosition = appointment.startMinutes * 2;
+
+                return (
+                  <button
+                    key={appointment._id}
+                    onClick={() => handleAppointmentClick(appointment)}
+                    className="absolute left-2 right-2 text-left p-2 rounded-lg transition-all duration-200 hover:shadow-md border-l-4"
+                    style={{
+                      top: `${topPosition}px`,
+                      height: `${appointment.heightPx}px`,
+                      backgroundColor: appointment.pagada ? '#F0F9FF' : '#FCFFA8',
+                      borderLeftColor: appointment.profesional.color || '#555BF6',
+                      zIndex: 10
+                    }}
+                  >
+                    <div className="space-y-1 h-full flex flex-col justify-between">
+                      {/* Hora y cliente */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-600">
+                          {appointment.timeDisplay}
+                        </span>
+                        <span className="text-sm font-semibold" style={{ color: '#555BF6' }}>
+                          {appointment.usuario.nombre}
+                        </span>
+                      </div>
+
+                      {/* Contenido central - se muestra solo si hay espacio suficiente */}
+                      {appointment.durationMinutes >= 45 && (
+                        <>
                           {/* Servicio */}
                           <div className="flex items-center space-x-1">
                             <ServiceIcon size={12} className="text-gray-500" />
@@ -170,32 +181,25 @@ const DayView: React.FC<DayViewProps> = ({
                               <span>{appointment.sucursal.nombre}</span>
                             </div>
                           </div>
+                        </>
+                      )}
 
-                          {/* Precio y estado */}
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium" style={{ color: '#555BF6' }}>
-                              €{appointment.importe.toFixed(2)} ({appointment.durationMinutes}min)
-                            </span>
-                            {appointment.pagada && (
-                              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                                Pagada
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-
-                    {/* Slot vacío */}
-                    {appointmentsInSlot.length === 0 && (
-                      <div className="h-full min-h-[56px] flex items-center justify-center text-gray-300">
-                        <span className="text-xs">Disponible</span>
+                      {/* Precio y estado - siempre visible */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium" style={{ color: '#555BF6' }}>
+                          €{appointment.importe.toFixed(2)} ({appointment.durationMinutes}min)
+                        </span>
+                        {appointment.pagada && (
+                          <span className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded-full">
+                            Pagada
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Línea de tiempo actual */}
@@ -221,12 +225,10 @@ const CurrentTimeLine: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
     // Solo mostrar dentro del horario de trabajo (6:00-22:00)
     if (hour < 6 || hour > 22) return null;
 
-    // Calcular posición
+    // Calcular posición exacta en minutos desde las 6:00 (2px por minuto)
     const totalMinutesFromStart = (hour - 6) * 60 + minute;
-    const slotHeight = 60; // Altura de cada slot de 30min
-    const position = (totalMinutesFromStart / 30) * slotHeight;
 
-    return position;
+    return totalMinutesFromStart * 2;
   }, [selectedDate]);
 
   if (currentTimePosition === null) return null;
