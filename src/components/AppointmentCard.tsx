@@ -4,6 +4,7 @@ import { Appointment } from '../types';
 import { isAppointmentDisabled } from '../utils/helpers';
 import {
   DiscountIcon,
+  LocationIcon,
   MailIcon,
   PhoneIcon,
   ProfessionalIcon,
@@ -116,7 +117,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
   const infoTileClass = `${
     isDisabled ? 'bg-gray-100 text-gray-400' : 'bg-gray-50 text-gray-700'
-  } rounded-2xl px-3 py-2.5`;
+  } rounded-2xl px-3 py-2`;
   const infoInlineRowClass = 'flex flex-wrap items-center gap-x-2 gap-y-1';
   const infoInlineLabelClass = `text-[12px] font-semibold ${
     isDisabled ? 'text-gray-400' : 'text-gray-500'
@@ -148,9 +149,9 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       }}
       onClick={isDisabled ? undefined : onClick}
     >
-      <div className="p-6 h-full flex flex-col gap-4 overflow-hidden">
+      <div className="p-4 h-full flex flex-col gap-3 overflow-hidden">
         {/* Top section - Status and Name */}
-        <div className="flex-shrink-0 space-y-3">
+        <div className="flex-shrink-0 space-y-2">
           {appointment.pagada ? (
             <div className="flex justify-center">
               <span className="text-xs bg-green-100 text-green-800 px-4 py-1.5 rounded-full font-semibold tracking-wide">
@@ -186,11 +187,10 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         </div>
 
         {/* Middle section - Information */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           <div className={`${infoTileClass} flex items-start gap-2.5`}>
             <PhoneIcon size={16} className="mt-0.5" />
             <div className={`${infoInlineRowClass} flex-1`}>
-              <span className={infoInlineLabelClass}>Teléfono:</span>
               <a
                 href={`tel:${appointment.usuario.telefono}`}
                 className={`${infoValueClass} ${
@@ -207,28 +207,16 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           <div className={`${infoTileClass} flex items-start gap-2.5`}>
             <ServiceIcon size={16} className="mt-0.5" />
             <div className={`${infoInlineRowClass} flex-1`}>
-              <span className={infoInlineLabelClass}>Servicio:</span>
               <span className={`${infoValueClass} break-words`}>
                 {primaryService?.nombre || 'Servicio no especificado'}
               </span>
             </div>
           </div>
 
-          {appointment.profesional?.nombre && (
-            <div className={`${infoTileClass} flex items-start gap-2.5`}>
-              <ProfessionalIcon size={16} className="mt-0.5" />
-              <div className={`${infoInlineRowClass} flex-1`}>
-                <span className={infoInlineLabelClass}>Profesional:</span>
-                <span className={infoValueClass}>{appointment.profesional.nombre}</span>
-              </div>
-            </div>
-          )}
-
           {appointment.variantes && appointment.variantes.length > 0 && (
             <div className={`${infoTileClass} flex items-start gap-2.5`}>
               <VariantIcon size={16} className="mt-0.5" />
               <div className={`${infoInlineRowClass} flex-1`}>
-                <span className={infoInlineLabelClass}>Variante:</span>
                 <span className={`text-[13px] font-medium leading-snug tracking-tight ${infoMutedClass}`}>
                   {appointment.variantes.map(v => v.nombre).join(', ')}
                 </span>
@@ -236,10 +224,27 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             </div>
           )}
 
+          {appointment.sucursal && (
+            <div className={`${infoTileClass} flex items-start gap-2.5`}>
+              <LocationIcon size={16} className="mt-0.5" />
+              <div className={`${infoInlineRowClass} flex-1`}>
+                <span className={infoValueClass}>{appointment.sucursal.nombre}</span>
+              </div>
+            </div>
+          )}
+
+          {appointment.profesional?.nombre && (
+            <div className={`${infoTileClass} flex items-start gap-2.5`}>
+              <ProfessionalIcon size={16} className="mt-0.5" />
+              <div className={`${infoInlineRowClass} flex-1`}>
+                <span className={infoValueClass}>{appointment.profesional.nombre}</span>
+              </div>
+            </div>
+          )}
+
           <div className={`${infoTileClass} flex items-start gap-2.5`}>
             <DiscountIcon size={16} className="mt-0.5" />
             <div className={`${infoInlineRowClass} flex-1`}>
-              <span className={infoInlineLabelClass}>Promociones:</span>
               {appointment.promocion.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {promotionLabels.map(({ key, label }) => (
@@ -261,10 +266,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             <div className={`${infoTileClass} flex items-start gap-2.5`}>
               <MailIcon size={16} className="mt-0.5" />
               <div className="space-y-1 flex-1">
-                <span className={`${infoInlineLabelClass} uppercase tracking-wide`}>
-                  Comentarios de la cita:
-                </span>
-                <p className={`text-[12px] leading-relaxed ${infoMutedClass}`}>
+                <p className={`text-[13px] leading-relaxed font-medium ${infoValueClass}`}>
                   {appointmentComments.join(' | ')}
                 </p>
               </div>
@@ -275,10 +277,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             <div className={`${infoTileClass} flex items-start gap-2.5`}>
               <MailIcon size={16} className="mt-0.5" />
               <div className="space-y-1 flex-1">
-                <span className={`${infoInlineLabelClass} uppercase tracking-wide`}>
-                  Comentarios del cliente:
-                </span>
-                <p className={`text-[12px] leading-relaxed ${infoMutedClass}`}>
+                <p className={`text-[13px] leading-relaxed font-medium ${infoValueClass}`}>
                   {clientComments.join(' | ')}
                 </p>
               </div>
