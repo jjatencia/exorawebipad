@@ -112,11 +112,17 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <div className="p-6 h-full flex flex-col overflow-hidden">
         {/* Top section - Header */}
         <div className="flex-shrink-0">
-          {/* Badge de estado pagada */}
-          {appointment.pagada && (
+          {/* Badge de estado pagada o saldo disponible */}
+          {appointment.pagada ? (
             <div className="flex justify-center items-center mb-3">
               <span className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
                 PAGADA
+              </span>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center mb-3">
+              <span className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                Saldo: €{appointment.usuario.saldoMonedero.toFixed(2)}
               </span>
             </div>
           )}
@@ -178,17 +184,6 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             <span className="text-base">{appointment.sucursal.nombre}</span>
           </div>
 
-          {/* Solo mostrar estado si no está pagada (para evitar duplicar info) */}
-          {!appointment.pagada && (
-            <div className={`flex items-center space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-              <PaymentIcon size={16} />
-              <span className="text-base">
-                Estado: <span className="text-orange-600 font-medium">
-                  Pendiente
-                </span>
-              </span>
-            </div>
-          )}
 
           {/* Promociones */}
           <div className={`flex items-start space-x-3 ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
