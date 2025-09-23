@@ -40,90 +40,116 @@ export const useSwipeGestureSimple = ({
   }));
 
   // Helper functions
-  const resetToCenter = () => api.start(RESET_POSITION);
+  const resetToCenter = () => {
+    try {
+      api.start(RESET_POSITION);
+    } catch (error) {
+      console.warn('Reset animation error:', error);
+    }
+  };
 
   const isAtEdge = (isLeftSwipe: boolean) =>
     (isFirst && !isLeftSwipe) || (isLast && isLeftSwipe);
 
   const executeSwipeAnimation = (isLeftSwipe: boolean) => {
-    api.start({
-      x: isLeftSwipe ? -window.innerWidth : window.innerWidth,
-      opacity: 0,
-      scale: 0.9,
-      rotate: isLeftSwipe ? -15 : 15,
-      config: EXIT_CONFIG
-    });
+    try {
+      api.start({
+        x: isLeftSwipe ? -window.innerWidth : window.innerWidth,
+        opacity: 0,
+        scale: 0.9,
+        rotate: isLeftSwipe ? -15 : 15,
+        config: EXIT_CONFIG
+      });
 
-    setTimeout(() => {
-      // Resetear inmediatamente antes de cambiar
-      api.set(RESET_POSITION);
-      // Luego ejecutar el cambio
+      setTimeout(() => {
+        try {
+          // Ejecutar el cambio primero
+          if (isLeftSwipe) {
+            onSwipeLeft();
+          } else {
+            onSwipeRight();
+          }
+          // Luego resetear después de un pequeño delay
+          setTimeout(() => {
+            api.set(RESET_POSITION);
+          }, 50);
+        } catch (error) {
+          console.error('Swipe execution error:', error);
+          // Fallback: resetear inmediatamente
+          api.set(RESET_POSITION);
+        }
+      }, ANIMATION_DELAY);
+    } catch (error) {
+      console.error('Swipe animation error:', error);
+      // Fallback: ejecutar directamente sin animación
       if (isLeftSwipe) {
         onSwipeLeft();
       } else {
         onSwipeRight();
       }
-    }, ANIMATION_DELAY);
-  };
-
-  const handleVerticalSwipe = (my: number) => {
-    if (Math.abs(my) > VERTICAL_SWIPE_THRESHOLD && my > 0 && onSwipeDown) {
-      onSwipeDown();
     }
-    resetToCenter();
   };
 
   const handleDragFeedback = (mx: number, my: number) => {
-    const progress = Math.min(Math.abs(mx) / PROGRESS_DIVISOR, 1);
-    const distance = Math.sqrt(mx * mx + my * my);
+    try {
+      const progress = Math.min(Math.abs(mx) / PROGRESS_DIVISOR, 1);
+      const distance = Math.sqrt(mx * mx + my * my);
 
-    api.start({
-      x: mx * DRAG_RESISTANCE,
-      y: my * VERTICAL_RESISTANCE,
-      opacity: Math.max(0.85, 1 - progress * 0.1),
-      scale: Math.max(0.95, 1 - (distance / 1000) * 0.05),
-      rotate: mx / 10, // Rotación Z más pronunciada
-      immediate: true
-    });
+      api.start({
+        x: mx * DRAG_RESISTANCE,
+        y: my * VERTICAL_RESISTANCE,
+        opacity: Math.max(0.85, 1 - progress * 0.1),
+        scale: Math.max(0.95, 1 - (distance / 1000) * 0.05),
+        rotate: mx / 10,
+        immediate: true
+      });
+    } catch (error) {
+      console.warn('Drag feedback error:', error);
+    }
   };
 
   const bind = useDrag(({ down, movement: [mx, my] }) => {
     if (disabled) return;
 
-    if (!down) {
-      const absX = Math.abs(mx);
-      const absY = Math.abs(my);
+    try {
+      if (!down) {
+        const absX = Math.abs(mx);
+        const absY = Math.abs(my);
 
-      const isVerticalPreference = absY > absX && absY > VERTICAL_SWIPE_THRESHOLD;
-
-      if (isVerticalPreference) {
-        handleVerticalSwipe(my);
-        return;
-      }
-
-      if (absX > SWIPE_THRESHOLD) {
-        const isLeftSwipe = mx < 0;
-
-        if (isAtEdge(isLeftSwipe)) {
+        // Swipe vertical prioritario
+        if (absY > absX && absY > VERTICAL_SWIPE_THRESHOLD && my > 0 && onSwipeDown) {
+          onSwipeDown();
           resetToCenter();
           return;
         }
 
-        executeSwipeAnimation(isLeftSwipe);
-        return;
-      }
+        // Swipe horizontal
+        if (absX > SWIPE_THRESHOLD) {
+          const isLeftSwipe = mx < 0;
 
-      // Solo manejar swipe vertical si no hubo swipe horizontal
+          if (isAtEdge(isLeftSwipe)) {
+            resetToCenter();
+            return;
+          }
+
+          executeSwipeAnimation(isLeftSwipe);
+          return;
+        }
+
+        // Cualquier otro caso: resetear
+        resetToCenter();
+      } else {
+        handleDragFeedback(mx, my);
+      }
+    } catch (error) {
+      console.error('Gesture handling error:', error);
       resetToCenter();
-    } else {
-      handleDragFeedback(mx, my);
     }
   }, {
-    // Configuración para movimiento inmediato y fluido
-    threshold: 0, // Sin umbral - respuesta inmediata
-    filterTaps: false, // No filtrar taps para respuesta más rápida
+    threshold: 5, // Pequeño umbral para evitar gestos accidentales
+    filterTaps: true, // Filtrar taps para mayor estabilidad
     preventScroll: false,
-    pointer: { touch: true } // Optimizado para touch
+    pointer: { touch: true }
   });
 
   return {
