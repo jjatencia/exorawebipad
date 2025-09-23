@@ -11,11 +11,45 @@ const CACHE_MAX_SIZE = 10;
 // Request debouncing to prevent duplicate API calls
 let activeRequests = new Map<string, Promise<any>>();
 
+const safeStringify = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  try {
+    const stringified = JSON.stringify(value);
+    return typeof stringified === 'string' ? stringified : String(value);
+  } catch (error) {
+    console.warn('Error stringifying value for cache key', error);
+    return String(value);
+  }
+};
+
+const createAppointmentSignature = (appointment: Appointment): string => {
+  const appointmentCommentsSignature = safeStringify(appointment.comentarios ?? []);
+  const clientCommentsSignature = safeStringify(appointment.usuario?.comentarios ?? []);
+
+  return [
+    appointment._id,
+    appointment.pagada ? '1' : '0',
+    appointment.usuario?.saldoMonedero ?? 0,
+    appointment.modificacion ?? '',
+    appointmentCommentsSignature,
+    clientCommentsSignature
+  ].join('|');
+};
+
 const filterAndSortAppointments = (appointments: Appointment[], forceRefresh = false) => {
   // Create cache key based on appointments data and current time (rounded to 5 min intervals)
   const now = new Date();
   const timeSlot = Math.floor(now.getTime() / (5 * 60 * 1000)); // 5-minute intervals
-  const cacheKey = `${appointments.length}-${timeSlot}-${appointments.map(a => `${a._id}-${a.pagada}-${a.usuario.saldoMonedero || 0}`).join(',')}`;
+  const cacheKey = `${
+    appointments.length
+  }-${timeSlot}-${appointments.map(createAppointmentSignature).join(',')}`;
 
   // Check cache first (unless force refresh)
   if (!forceRefresh && filterCache.has(cacheKey)) {
