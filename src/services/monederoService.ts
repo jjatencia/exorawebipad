@@ -108,7 +108,7 @@ export class MonederoService {
       await this.obtenerUsuarioActualizado(clienteId, empresaId);
 
       // 3. Obtener venta completa (primera llamada)
-      const ventaResponse1 = await this.obtenerVenta(ventaId);
+      await this.obtenerVenta(ventaId);
 
       // 4. Obtener venta completa (segunda llamada para confirmar)
       const ventaResponse2 = await this.obtenerVenta(ventaId);

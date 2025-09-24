@@ -314,26 +314,27 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
     setInputAmount(maxAmount.toString());
   }, [activeInput, importeRestante, paymentAmounts]);
 
-  const handleAmountChange = useCallback((methodId: string, amount: string) => {
-    const numAmount = Math.max(0, parseFloat(amount) || 0);
-    const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
-    const finalAmount = Math.min(numAmount, maxAmount);
+  // Removed unused handlers - keeping for potential future use
+  // const handleAmountChange = useCallback((methodId: string, amount: string) => {
+  //   const numAmount = Math.max(0, parseFloat(amount) || 0);
+  //   const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
+  //   const finalAmount = Math.min(numAmount, maxAmount);
 
-    setPaymentAmounts(prev => ({
-      ...prev,
-      [methodId]: finalAmount
-    }));
-  }, [importeRestante, paymentAmounts]);
+  //   setPaymentAmounts(prev => ({
+  //     ...prev,
+  //     [methodId]: finalAmount
+  //   }));
+  // }, [importeRestante, paymentAmounts]);
 
-  const handleQuickAmount = useCallback((methodId: string, amount: number) => {
-    const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
-    const finalAmount = Math.min(amount, maxAmount);
+  // const handleQuickAmount = useCallback((methodId: string, amount: number) => {
+  //   const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
+  //   const finalAmount = Math.min(amount, maxAmount);
 
-    setPaymentAmounts(prev => ({
-      ...prev,
-      [methodId]: finalAmount
-    }));
-  }, [importeRestante, paymentAmounts]);
+  //   setPaymentAmounts(prev => ({
+  //     ...prev,
+  //     [methodId]: finalAmount
+  //   }));
+  // }, [importeRestante, paymentAmounts]);
 
   const paymentMethods = useMemo(
     () => [
