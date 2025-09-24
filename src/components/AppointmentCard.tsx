@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import { isAppointmentDisabled } from '../utils/helpers';
+import { PromocionesService, Promocion } from '../services/promocionesService';
 import {
   DiscountIcon,
   LocationIcon,
@@ -68,6 +69,24 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
 }) => {
   const isDisabled = isAppointmentDisabled(appointment);
   const primaryService = appointment.servicios[0];
+  const [promociones, setPromociones] = useState<Promocion[]>([]);
+
+  // Cargar promociones de la empresa
+  useEffect(() => {
+    const cargarPromociones = async () => {
+      if (appointment.empresa) {
+        try {
+          const promocionesEmpresa = await PromocionesService.getPromocionesEmpresa(appointment.empresa);
+          setPromociones(promocionesEmpresa);
+        } catch (error) {
+          console.error('Error cargando promociones:', error);
+          setPromociones([]);
+        }
+      }
+    };
+
+    cargarPromociones();
+  }, [appointment.empresa]);
 
   const appointmentDate = useMemo(() => new Date(appointment.fecha), [appointment.fecha]);
   const formattedTime = useMemo(
@@ -84,18 +103,29 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       return [];
     }
 
-    return appointment.promocion.map((promo, index) => {
+    return appointment.promocion.map((promoId, index) => {
       const key = `promo-${index}`;
-      if (typeof promo === 'string') {
-        return { key, label: promo };
+      
+      // Si promoId es un string (ID), buscar la promoción en el estado
+      if (typeof promoId === 'string') {
+        const promocion = promociones.find(p => p._id === promoId);
+        if (promocion) {
+          const label = promocion.titulo || promocion.descripcion || 'Promoción';
+          return { key, label };
+        }
+        // Si no se encuentra la promoción, mostrar el ID como fallback
+        return { key, label: promoId };
       }
-      if (typeof promo === 'object' && promo !== null) {
-        const label = (promo as any).nombre || (promo as any).descripcion || 'Promoción';
+      
+      // Si promoId es un objeto, usar la lógica anterior
+      if (typeof promoId === 'object' && promoId !== null) {
+        const label = (promoId as any).nombre || (promoId as any).descripcion || (promoId as any).titulo || 'Promoción';
         return { key, label };
       }
+      
       return { key, label: 'Promoción' };
     });
-  }, [appointment.promocion]);
+  }, [appointment.promocion, promociones]);
 
   const appointmentComments = useMemo(
     () => normalizeComments(appointment.comentarios),
