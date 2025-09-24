@@ -527,33 +527,35 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
           </div>
 
           {/* Payment Methods */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="text-base font-medium" style={{ color: '#555BF6' }}>Método de pago:</div>
-            {paymentMethods.map((method) => {
-              const IconComponent = method.icon;
-              return (
-                <button
-                  key={method.id}
-                  onClick={() => setSelectedPaymentMethod(method.id)}
-                  className={`w-full p-3 rounded-lg border-2 flex items-center space-x-3 transition-all ${
-                    selectedPaymentMethod === method.id
-                      ? 'border-white shadow-md'
-                      : 'border-white/50 hover:opacity-80'
-                  }`}
-                  style={{
-                    backgroundColor: selectedPaymentMethod === method.id ? '#FAFAB0' : 'rgba(250, 250, 176, 0.5)'
-                  }}
-                >
-                  <IconComponent size={20} style={{ color: '#555BF6' }} />
-                  <span className="text-base font-medium" style={{ color: '#555BF6' }}>{method.name}</span>
-                  {selectedPaymentMethod === method.id && (
-                    <div className="ml-auto">
-                      <CheckIcon size={16} strokeWidth={3} style={{ color: '#555BF6' }} />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+            <div className="flex gap-3 justify-between">
+              {paymentMethods.map((method) => {
+                const IconComponent = method.icon;
+                return (
+                  <button
+                    key={method.id}
+                    onClick={() => setSelectedPaymentMethod(method.id)}
+                    className={`flex-1 p-4 rounded-lg border-2 flex items-center justify-center relative transition-all ${
+                      selectedPaymentMethod === method.id
+                        ? 'border-white shadow-md'
+                        : 'border-white/50 hover:opacity-80'
+                    }`}
+                    style={{
+                      backgroundColor: selectedPaymentMethod === method.id ? '#FAFAB0' : 'rgba(250, 250, 176, 0.5)'
+                    }}
+                    title={method.name}
+                  >
+                    <IconComponent size={24} style={{ color: '#555BF6' }} />
+                    {selectedPaymentMethod === method.id && (
+                      <div className="absolute top-1 right-1">
+                        <CheckIcon size={14} strokeWidth={3} style={{ color: '#555BF6' }} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
