@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useAppointmentStore } from '../stores/appointmentStore';
 // import { formatDateForAPILocal } from '../utils/helpers'; // No longer needed after removing date restriction
 import { createVenta } from '../services/ventasService';
+import { MonederoService } from '../services/monederoService';
 import { Appointment, ViewMode } from '../types';
 
 interface UseDashboardResult {
@@ -28,6 +29,7 @@ interface UseDashboardResult {
     refreshAppointments: () => void;
     initiatePaymentMode: () => void;
     completePayment: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => Promise<void>;
+    completeWalletPayment: (appointmentId: string, editedAppointment?: Appointment) => Promise<void>;
     cancelPayment: () => void;
     logout: () => void;
     selectAppointment: (appointment: Appointment) => void;
@@ -205,6 +207,57 @@ export const useDashboard = (): UseDashboardResult => {
     [currentDate, currentIndex, filteredAppointments, fetchAppointments, resetPaymentMode, logoutStore, navigate]
   );
 
+  const completeWalletPayment = useCallback(
+    async (_appointmentId: string, editedAppointment?: Appointment) => {
+      const currentAppointment = filteredAppointments[currentIndex];
+
+      if (!currentAppointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      try {
+        toast.loading('Procesando pago con monedero...');
+
+        // Usar la cita editada si está disponible, caso contrario usar la original
+        const appointmentToProcess = editedAppointment || currentAppointment;
+
+        // Verificar saldo suficiente
+        if (!MonederoService.tieneSaldoSuficiente(appointmentToProcess.usuario.saldoMonedero, appointmentToProcess.importe)) {
+          toast.dismiss();
+          toast.error('Saldo insuficiente en el monedero');
+          return;
+        }
+
+        // Procesar pago con monedero usando la secuencia completa de la API
+        await MonederoService.procesarPagoMonedero(
+          appointmentToProcess.usuario._id,
+          appointmentToProcess.empresa,
+          appointmentToProcess._id,
+          appointmentToProcess.importe
+        );
+
+        toast.dismiss();
+        toast.success('Pago con monedero completado exitosamente');
+        resetPaymentMode();
+        fetchAppointments(currentDate);
+      } catch (error: any) {
+        toast.dismiss();
+        console.error('Error al procesar el pago con monedero:', error);
+
+        // Handle auth errors gracefully
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al procesar el pago con monedero');
+        }
+      }
+    },
+    [currentDate, currentIndex, filteredAppointments, fetchAppointments, resetPaymentMode, logoutStore, navigate]
+  );
+
   const cancelPayment = useCallback(() => {
     resetPaymentMode();
     toast('Pago cancelado');
@@ -255,6 +308,7 @@ export const useDashboard = (): UseDashboardResult => {
       refreshAppointments,
       initiatePaymentMode,
       completePayment,
+      completeWalletPayment,
       cancelPayment,
       logout,
       selectAppointment

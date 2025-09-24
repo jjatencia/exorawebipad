@@ -105,6 +105,7 @@ const Dashboard: React.FC = () => {
                   onRefresh={handlers.refreshAppointments}
                   paymentMode={paymentMode}
                   onCompletePayment={handlers.completePayment}
+                  onWalletPayment={handlers.completeWalletPayment}
                 />
               </div>
             ) : (
