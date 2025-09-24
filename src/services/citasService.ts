@@ -64,7 +64,7 @@ export class CitasService {
         estadoCita: 'No presentado'
       };
 
-      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+      const response = await apiClient.post<UpdateCitaEstadoResponse>(
         `/citas/${citaId}`,
         payload
       );
@@ -90,7 +90,7 @@ export class CitasService {
         estadoCita: estadoCita
       };
 
-      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+      const response = await apiClient.post<UpdateCitaEstadoResponse>(
         `/citas/${citaId}`,
         payload
       );
