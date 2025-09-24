@@ -3,6 +3,7 @@ import { animated } from '@react-spring/web';
 import { Appointment, Servicio, Variante } from '../types';
 import { PromocionesService, Promocion } from '../services/promocionesService';
 import { ServiciosService } from '../services/serviciosService';
+import { MonederoService } from '../services/monederoService';
 import {
   CardIcon,
   CashIcon,
@@ -15,11 +16,13 @@ import {
 interface PaymentCardProps {
   appointment: Appointment;
   onCompletePayment?: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => void;
+  onWalletPayment?: (appointmentId: string, editedAppointment?: Appointment) => void;
 }
 
 const PaymentCard: React.FC<PaymentCardProps> = ({
   appointment,
-  onCompletePayment
+  onCompletePayment,
+  onWalletPayment
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
@@ -264,6 +267,10 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   const importeRestante = Math.max(0, importeTotal - totalAsignado);
   const esPagoCompleto = Math.abs(importeRestante) < 0.01;
 
+  // Verificar saldo del monedero
+  const saldoMonedero = appointment.usuario.saldoMonedero || 0;
+  const tieneSaldoSuficiente = MonederoService.tieneSaldoSuficiente(saldoMonedero, importeTotal);
+
   const handlePaymentMethodClick = useCallback((methodId: string) => {
     if (!isDividedPayment) {
       // Comportamiento normal: seleccionar método completo
@@ -350,48 +357,51 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
       }
     }
 
-    if (onCompletePayment) {
-      // Detectar si hay cambios comparando con los valores originales
-      const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
-      const hasVariantChanges = variantesSeleccionadas.length !== (appointment.variantes?.length || 0) ||
-        variantesSeleccionadas.some(v => !(appointment.variantes?.some(av => av._id === v._id)));
-      const hasPromocionChanges = promocionesSeleccionadas.length !== (appointment.promocion?.length || 0) ||
-        promocionesSeleccionadas.some(p => !appointment.promocion?.includes(p)) ||
-        appointment.promocion?.some(p => !promocionesSeleccionadas.includes(p));
+    // Detectar si hay cambios comparando con los valores originales
+    const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
+    const hasVariantChanges = variantesSeleccionadas.length !== (appointment.variantes?.length || 0) ||
+      variantesSeleccionadas.some(v => !(appointment.variantes?.some(av => av._id === v._id)));
+    const hasPromocionChanges = promocionesSeleccionadas.length !== (appointment.promocion?.length || 0) ||
+      promocionesSeleccionadas.some(p => !appointment.promocion?.includes(p)) ||
+      appointment.promocion?.some(p => !promocionesSeleccionadas.includes(p));
 
-      let editedAppointment: Appointment | undefined;
+    let editedAppointment: Appointment | undefined;
 
-      // Si hay cambios, crear un appointment actualizado
-      if (hasServiceChanges || hasVariantChanges || hasPromocionChanges) {
-        editedAppointment = {
-          ...appointment,
-          servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
-          variantes: variantesSeleccionadas,
-          promocion: promocionesSeleccionadas,
-          importe: precioConDescuento
-        };
-      }
+    // Si hay cambios, crear un appointment actualizado
+    if (hasServiceChanges || hasVariantChanges || hasPromocionChanges) {
+      editedAppointment = {
+        ...appointment,
+        servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
+        variantes: variantesSeleccionadas,
+        promocion: promocionesSeleccionadas,
+        importe: precioConDescuento
+      };
+    }
 
-      if (!isDividedPayment) {
-        // Modo normal: un solo pago
+    if (!isDividedPayment) {
+      // Modo normal: un solo pago
+      if (selectedPaymentMethod === 'Monedero' && onWalletPayment) {
+        // Usar el callback específico del monedero
+        onWalletPayment(appointment._id, editedAppointment);
+      } else if (onCompletePayment) {
+        // Otros métodos de pago
         onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
-      } else {
-        // Modo dividido: múltiples pagos
-        const pagosActivos = Object.entries(paymentAmounts)
-          .filter(([_, amount]) => amount > 0)
-          .map(([methodId, amount]) => ({ methodId, amount }));
+      }
+    } else {
+      // Modo dividido: múltiples pagos
+      const pagosActivos = Object.entries(paymentAmounts)
+        .filter(([_, amount]) => amount > 0)
+        .map(([methodId, amount]) => ({ methodId, amount }));
 
-        if (pagosActivos.length === 1) {
-          onCompletePayment(appointment._id, pagosActivos[0].methodId, editedAppointment);
-        } else if (pagosActivos.length > 1) {
-          // Procesar pagos múltiples secuencialmente
-          for (const pago of pagosActivos) {
-            const appointmentConImporte = editedAppointment
-              ? { ...editedAppointment, importe: pago.amount }
-              : { ...appointment, importe: pago.amount };
+      for (const pago of pagosActivos) {
+        const appointmentConImporte = editedAppointment
+          ? { ...editedAppointment, importe: pago.amount }
+          : { ...appointment, importe: pago.amount };
 
-            onCompletePayment(appointment._id, pago.methodId, appointmentConImporte);
-          }
+        if (pago.methodId === 'Monedero' && onWalletPayment) {
+          onWalletPayment(appointment._id, appointmentConImporte);
+        } else if (onCompletePayment) {
+          onCompletePayment(appointment._id, pago.methodId, appointmentConImporte);
         }
       }
     }
@@ -649,12 +659,16 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                 const IconComponent = method.icon;
                 const isSelected = selectedPaymentMethod === method.id;
                 const hasAmount = paymentAmounts[method.id] > 0;
+                const isWallet = method.id === 'Monedero';
+                const isDisabled = isWallet && !tieneSaldoSuficiente;
 
                 return (
                   <button
                     key={method.id}
                     onClick={() => handlePaymentMethodClick(method.id)}
                     onTouchStart={(e) => {
+                      if (isDisabled) return;
+
                       const timeoutId = setTimeout(() => {
                         handleLongPress(method.id);
                         if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
@@ -669,25 +683,54 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                       e.currentTarget.addEventListener('touchend', handleTouchEnd);
                       e.currentTarget.addEventListener('touchcancel', handleTouchEnd);
                     }}
+                    disabled={isDisabled}
                     className={`flex-1 p-4 rounded-lg border-2 flex items-center justify-center relative transition-all ${
-                      (!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)
+                      isDisabled
+                        ? 'border-gray-300 opacity-50 cursor-not-allowed'
+                        : (!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)
                         ? 'border-white shadow-md'
                         : 'border-white/50 hover:opacity-80'
                     }`}
                     style={{
-                      backgroundColor: ((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount))
+                      backgroundColor: isDisabled
+                        ? 'rgba(200, 200, 200, 0.3)'
+                        : ((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount))
                         ? '#FAFAB0'
                         : 'rgba(250, 250, 176, 0.5)'
                     }}
-                    title={`${method.name} - Mantén presionado para dividir pago`}
+                    title={
+                      isWallet
+                        ? `${method.name} - Saldo: €${saldoMonedero.toFixed(2)}${!tieneSaldoSuficiente ? ' (Insuficiente)' : ''}`
+                        : `${method.name} - Mantén presionado para dividir pago`
+                    }
                   >
-                    <IconComponent size={24} style={{ color: '#555BF6' }} />
-                    {((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)) && (
+                    <IconComponent size={24} style={{ color: isDisabled ? '#999' : '#555BF6' }} />
+
+                    {/* Check icon para métodos seleccionados */}
+                    {!isDisabled && ((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)) && (
                       <div className="absolute top-1 right-1">
                         <CheckIcon size={14} strokeWidth={3} style={{ color: '#555BF6' }} />
                       </div>
                     )}
-                    {isDividedPayment && hasAmount && (
+
+                    {/* Mostrar saldo del monedero */}
+                    {isWallet && (
+                      <div className="absolute bottom-1 left-1 right-1 text-center">
+                        <div
+                          className={`text-xs font-medium rounded px-1 ${
+                            tieneSaldoSuficiente ? 'bg-white/80' : 'bg-red-100'
+                          }`}
+                          style={{
+                            color: tieneSaldoSuficiente ? '#555BF6' : '#DC2626'
+                          }}
+                        >
+                          €{saldoMonedero.toFixed(2)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mostrar cantidad asignada en modo dividido (solo para métodos que no son monedero o que tienen saldo suficiente) */}
+                    {!isWallet && isDividedPayment && hasAmount && (
                       <div className="absolute bottom-1 left-1 right-1 text-center">
                         <div className="text-xs font-medium bg-white/80 rounded px-1" style={{ color: '#555BF6' }}>
                           €{paymentAmounts[method.id].toFixed(2)}
