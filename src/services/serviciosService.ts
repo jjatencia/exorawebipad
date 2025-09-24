@@ -25,7 +25,15 @@ export class ServiciosService {
   static async getVariantes(empresa: string): Promise<Variante[]> {
     try {
       const response = await apiClient.post<VariantesResponse>('/variantes/empresa', { empresa });
-      return response.data.variantes || [];
+
+      // Mapear las variantes para convertir 'valor' a 'precio'
+      const variantesNormalizadas = (response.data.variantes || []).map(variante => ({
+        _id: variante._id,
+        nombre: variante.nombre,
+        precio: (variante as any).valor || 0 // Mapear 'valor' a 'precio'
+      }));
+
+      return variantesNormalizadas;
     } catch (error) {
       console.error('Error fetching variantes:', error);
       throw error;
@@ -36,11 +44,9 @@ export class ServiciosService {
   static calcularPrecioTotal(servicio: Servicio, variantes: Variante[]): number {
     let precioTotal = servicio.precio;
 
-    // Aquí asumo que las variantes pueden tener precio adicional
-    // Si no tienen precio, solo devuelve el precio base del servicio
-    variantes.forEach(_variante => {
-      // Si las variantes tienen precio, se sumaría aquí
-      // precioTotal += variante.precio || 0;
+    // Sumar precio de variantes si lo tienen
+    variantes.forEach(variante => {
+      precioTotal += variante.precio || 0;
     });
 
     return precioTotal;

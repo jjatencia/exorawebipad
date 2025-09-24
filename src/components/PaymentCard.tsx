@@ -120,23 +120,63 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         setServiciosDisponibles(servicios);
         setVariantesDisponibles(variantes);
         setPromocionesDisponibles(promociones);
+
+        // Actualizar las variantes seleccionadas existentes con los precios de la API
+        const variantesActualizadas = variantesSeleccionadas.map(varianteExistente => {
+          const varianteConPrecio = variantes.find(v => v._id === varianteExistente._id || v.nombre === varianteExistente.nombre);
+          return {
+            ...varianteExistente,
+            precio: varianteConPrecio?.precio || 0
+          };
+        });
+
+        setVariantesSeleccionadas(variantesActualizadas);
+
+        // Calcular precio inicial cuando se entra en modo edición usando las variantes actualizadas
+        setTimeout(() => {
+          let precioBase = (servicioSeleccionado?.precio || 0) / 100;
+          const precioVariantes = variantesActualizadas.reduce((sum, variante) => {
+            return sum + ((variante.precio || 0) / 100);
+          }, 0);
+          precioBase += precioVariantes;
+
+          let descuentoAcumulado = 0;
+          for (const promocionId of promocionesSeleccionadas) {
+            const promocion = promociones.find(p => p._id === promocionId);
+            if (promocion && promocion.activo && promocion.tipo === 'descuento' && promocion.destino === 'servicio') {
+              if (promocion.porcentaje !== null && promocion.porcentaje !== undefined) {
+                descuentoAcumulado += precioBase * (promocion.porcentaje / 100);
+              } else if (promocion.cifra !== undefined && promocion.cifra > 0) {
+                descuentoAcumulado += promocion.cifra / 100;
+              }
+            }
+          }
+
+          const precioFinal = Math.max(0, precioBase - descuentoAcumulado);
+          setPrecioCalculado(precioFinal);
+          setDescuentoTotal(descuentoAcumulado);
+        }, 100);
       } catch (error) {
         console.error('Error cargando datos para edición:', error);
       }
     };
 
     cargarDatosEdicion();
-  }, [isEditing, appointment.empresa]);
+  }, [isEditing, appointment.empresa, servicioSeleccionado, variantesSeleccionadas, promocionesSeleccionadas]);
 
   // Recalcular precio cuando cambian las selecciones
   useEffect(() => {
     if (!isEditing) return;
 
-    const calcularNuevoPrecio = async () => {
+    const calcularNuevoPrecio = () => {
       let precioBase = (servicioSeleccionado?.precio || 0) / 100; // Convertir centavos a euros
 
-      // Aquí se podría añadir lógica para variantes con precio
-      // precioBase += variantesSeleccionadas.reduce((sum, v) => sum + (v.precio || 0), 0);
+      // Añadir precio de variantes seleccionadas
+      const precioVariantes = variantesSeleccionadas.reduce((sum, variante) => {
+        return sum + ((variante.precio || 0) / 100);
+      }, 0);
+
+      precioBase += precioVariantes;
 
       // Aplicar descuentos de promociones
       let descuentoAcumulado = 0;
@@ -313,6 +353,15 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                         />
                         <span className="text-sm" style={{ color: '#555BF6' }}>
                           {variante.nombre}
+                          {variante.precio !== undefined && variante.precio > 0 ? (
+                            <span className="ml-1 text-xs opacity-75">
+                              (+€{(variante.precio / 100).toFixed(2)})
+                            </span>
+                          ) : (
+                            <span className="ml-1 text-xs opacity-50">
+                              (gratis)
+                            </span>
+                          )}
                         </span>
                       </label>
                     ))}
@@ -358,7 +407,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
               <button
                 onClick={() => {
                   setIsEditing(false);
-                  // Aquí se aplicarían los cambios al precio final
+                  // Aplicar los cambios al precio final
                   setPrecioConDescuento(precioCalculado);
                 }}
                 className="w-full py-2 rounded-md text-sm font-medium transition-colors"
@@ -409,10 +458,10 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
               <div className="text-lg" style={{ color: '#555BF6' }}>Calculando...</div>
             ) : (
               <>
-                {(descuentoTotal > 0 || (isEditing && precioCalculado !== ((servicioSeleccionado?.precio || 0) / 100))) ? (
+                {(descuentoTotal > 0 || (isEditing && Math.abs(precioCalculado - appointment.importe) > 0.01)) ? (
                   <>
                     <div className="text-sm text-gray-600 line-through">
-                      €{isEditing ? ((servicioSeleccionado?.precio || 0) / 100).toFixed(2) : appointment.importe.toFixed(2)}
+                      €{appointment.importe.toFixed(2)}
                     </div>
                     <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
                       €{(isEditing ? precioCalculado : precioConDescuento).toFixed(2)}

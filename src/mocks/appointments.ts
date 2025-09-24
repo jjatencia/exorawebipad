@@ -173,7 +173,7 @@ export const MOCK_APPOINTMENTS = [
     comentarios: '',
     apiDate: getAPIFormattedDate(0)
   },
-  // Citas para mañana
+  // Día siguiente
   {
     id: '13',
     cliente: 'Ana Martínez',
@@ -317,7 +317,7 @@ export const MOCK_APPOINTMENTS = [
     comentarios: 'Estilo años 50.',
     apiDate: getAPIFormattedDate(1)
   },
-  // Citas para pasado mañana
+  // Día +2
   {
     id: '24',
     cliente: 'David Roca',

@@ -49,6 +49,7 @@ export interface Servicio {
 export interface Variante {
   _id: string;
   nombre: string;
+  precio?: number; // Precio adicional en centavos (opcional)
 }
 
 export interface Recordatorios {
