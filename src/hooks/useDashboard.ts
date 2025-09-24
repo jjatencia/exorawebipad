@@ -272,7 +272,7 @@ export const useDashboard = (): UseDashboardResult => {
       try {
         toast.loading('Marcando como no presentado...');
 
-        await CitasService.marcarNoPresentado(appointmentId, appointment.empresa);
+        await CitasService.marcarNoPresentado(appointment);
 
         toast.dismiss();
         toast.success('Cita marcada como no presentado');

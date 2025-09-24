@@ -1,8 +1,13 @@
 import { apiClient } from './api';
+import { Appointment } from '../types';
 
 export interface UpdateCitaEstadoRequest {
   empresa: string;
   estadoCita: string;
+  sucursal: string;
+  usuario: string;
+  fecha: string;
+  servicios: string[];
 }
 
 export interface UpdateCitaEstadoResponse {
@@ -57,15 +62,19 @@ export class CitasService {
   /**
    * Marca una cita como "No presentado"
    */
-  static async marcarNoPresentado(citaId: string, empresaId: string): Promise<UpdateCitaEstadoResponse> {
+  static async marcarNoPresentado(appointment: Appointment): Promise<UpdateCitaEstadoResponse> {
     try {
       const payload: UpdateCitaEstadoRequest = {
-        empresa: empresaId,
-        estadoCita: 'No presentado'
+        empresa: appointment.empresa,
+        estadoCita: 'No presentado',
+        sucursal: appointment.sucursal._id,
+        usuario: appointment.usuario._id,
+        fecha: appointment.fecha,
+        servicios: appointment.servicios.map(s => s._id)
       };
 
       const response = await apiClient.put<UpdateCitaEstadoResponse>(
-        `/citas/${citaId}`,
+        `/citas/${appointment._id}`,
         payload
       );
 
@@ -80,18 +89,21 @@ export class CitasService {
    * Actualiza el estado de una cita
    */
   static async updateEstadoCita(
-    citaId: string,
-    empresaId: string,
+    appointment: Appointment,
     estadoCita: string
   ): Promise<UpdateCitaEstadoResponse> {
     try {
       const payload: UpdateCitaEstadoRequest = {
-        empresa: empresaId,
-        estadoCita: estadoCita
+        empresa: appointment.empresa,
+        estadoCita: estadoCita,
+        sucursal: appointment.sucursal._id,
+        usuario: appointment.usuario._id,
+        fecha: appointment.fecha,
+        servicios: appointment.servicios.map(s => s._id)
       };
 
       const response = await apiClient.put<UpdateCitaEstadoResponse>(
-        `/citas/${citaId}`,
+        `/citas/${appointment._id}`,
         payload
       );
 
