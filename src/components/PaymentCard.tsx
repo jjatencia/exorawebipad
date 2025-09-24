@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { animated } from '@react-spring/web';
 import { Appointment, Servicio, Variante } from '../types';
 import { PromocionesService, Promocion } from '../services/promocionesService';
@@ -35,6 +35,13 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   const [variantesSeleccionadas, setVariantesSeleccionadas] = useState<Variante[]>(appointment.variantes || []);
   const [promocionesSeleccionadas, setPromocionesSeleccionadas] = useState<string[]>(appointment.promocion || []);
   const [precioCalculado, setPrecioCalculado] = useState<number>(appointment.importe);
+
+  // Estados originales para poder cancelar cambios
+  const [estadoOriginal, setEstadoOriginal] = useState({
+    servicioSeleccionado: appointment.servicios[0] || null,
+    variantesSeleccionadas: appointment.variantes || [],
+    promocionesSeleccionadas: appointment.promocion || []
+  });
   const cardSizeStyle = {
     width: 'min(100%, 560px)',
     maxWidth: '560px',
@@ -122,47 +129,63 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         setPromocionesDisponibles(promociones);
 
         // Actualizar las variantes seleccionadas existentes con los precios de la API
-        const variantesActualizadas = variantesSeleccionadas.map(varianteExistente => {
-          const varianteConPrecio = variantes.find(v => v._id === varianteExistente._id || v.nombre === varianteExistente.nombre);
-          return {
-            ...varianteExistente,
-            precio: varianteConPrecio?.precio || 0
-          };
-        });
+        // Solo al entrar en modo edición por primera vez
+        if (isEditing) {
+          const variantesActualizadas = variantesSeleccionadas.map(varianteExistente => {
+            const varianteConPrecio = variantes.find(v => v._id === varianteExistente._id || v.nombre === varianteExistente.nombre);
+            return {
+              ...varianteExistente,
+              precio: varianteConPrecio?.precio || 0
+            };
+          });
 
-        setVariantesSeleccionadas(variantesActualizadas);
+          // Solo actualizar si realmente hay diferencias
+          const hayDiferencias = variantesActualizadas.some((v, i) =>
+            v.precio !== variantesSeleccionadas[i]?.precio
+          );
 
-        // Calcular precio inicial cuando se entra en modo edición usando las variantes actualizadas
-        setTimeout(() => {
-          let precioBase = (servicioSeleccionado?.precio || 0) / 100;
-          const precioVariantes = variantesActualizadas.reduce((sum, variante) => {
-            return sum + ((variante.precio || 0) / 100);
-          }, 0);
-          precioBase += precioVariantes;
+          if (hayDiferencias) {
+            setVariantesSeleccionadas(variantesActualizadas);
 
-          let descuentoAcumulado = 0;
-          for (const promocionId of promocionesSeleccionadas) {
-            const promocion = promociones.find(p => p._id === promocionId);
-            if (promocion && promocion.activo && promocion.tipo === 'descuento' && promocion.destino === 'servicio') {
-              if (promocion.porcentaje !== null && promocion.porcentaje !== undefined) {
-                descuentoAcumulado += precioBase * (promocion.porcentaje / 100);
-              } else if (promocion.cifra !== undefined && promocion.cifra > 0) {
-                descuentoAcumulado += promocion.cifra / 100;
+            // Actualizar también el estado original con los precios
+            setEstadoOriginal(prev => ({
+              ...prev,
+              variantesSeleccionadas: variantesActualizadas
+            }));
+
+            // Calcular precio inicial
+            setTimeout(() => {
+              let precioBase = (servicioSeleccionado?.precio || 0) / 100;
+              const precioVariantes = variantesActualizadas.reduce((sum, variante) => {
+                return sum + ((variante.precio || 0) / 100);
+              }, 0);
+              precioBase += precioVariantes;
+
+              let descuentoAcumulado = 0;
+              for (const promocionId of promocionesSeleccionadas) {
+                const promocion = promociones.find(p => p._id === promocionId);
+                if (promocion && promocion.activo && promocion.tipo === 'descuento' && promocion.destino === 'servicio') {
+                  if (promocion.porcentaje !== null && promocion.porcentaje !== undefined) {
+                    descuentoAcumulado += precioBase * (promocion.porcentaje / 100);
+                  } else if (promocion.cifra !== undefined && promocion.cifra > 0) {
+                    descuentoAcumulado += promocion.cifra / 100;
+                  }
+                }
               }
-            }
-          }
 
-          const precioFinal = Math.max(0, precioBase - descuentoAcumulado);
-          setPrecioCalculado(precioFinal);
-          setDescuentoTotal(descuentoAcumulado);
-        }, 100);
+              const precioFinal = Math.max(0, precioBase - descuentoAcumulado);
+              setPrecioCalculado(precioFinal);
+              setDescuentoTotal(descuentoAcumulado);
+            }, 50);
+          }
+        }
       } catch (error) {
         console.error('Error cargando datos para edición:', error);
       }
     };
 
     cargarDatosEdicion();
-  }, [isEditing, appointment.empresa, servicioSeleccionado, variantesSeleccionadas, promocionesSeleccionadas]);
+  }, [isEditing, appointment.empresa]);
 
   // Recalcular precio cuando cambian las selecciones
   useEffect(() => {
@@ -198,6 +221,38 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
     calcularNuevoPrecio();
   }, [servicioSeleccionado, variantesSeleccionadas, promocionesSeleccionadas, promocionesDisponibles, isEditing]);
+
+  // Callbacks para manejar cambios
+  const handleServiceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const servicio = serviciosDisponibles.find(s => s._id === e.target.value);
+    setServicioSeleccionado(servicio || null);
+  }, [serviciosDisponibles]);
+
+  const handleVariantChange = useCallback((variante: Variante, checked: boolean) => {
+    if (checked) {
+      setVariantesSeleccionadas(prev => [...prev, variante]);
+    } else {
+      setVariantesSeleccionadas(prev => prev.filter(v => v._id !== variante._id));
+    }
+  }, []);
+
+  const handlePromocionChange = useCallback((promocionId: string, checked: boolean) => {
+    if (checked) {
+      setPromocionesSeleccionadas(prev => [...prev, promocionId]);
+    } else {
+      setPromocionesSeleccionadas(prev => prev.filter(p => p !== promocionId));
+    }
+  }, []);
+
+  const cancelarCambios = useCallback(() => {
+    // Restaurar estados originales
+    setServicioSeleccionado(estadoOriginal.servicioSeleccionado);
+    setVariantesSeleccionadas(estadoOriginal.variantesSeleccionadas);
+    setPromocionesSeleccionadas(estadoOriginal.promocionesSeleccionadas);
+    setPrecioCalculado(appointment.importe);
+    setPrecioConDescuento(precioConDescuento); // Mantener el precio con descuentos original
+    setIsEditing(false);
+  }, [estadoOriginal, appointment.importe, precioConDescuento]);
 
   const paymentMethods = useMemo(
     () => [
@@ -269,7 +324,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
               {isEditing ? 'Editando servicio' : 'Servicio reservado'}
             </div>
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={isEditing ? cancelarCambios : () => setIsEditing(true)}
               className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
               style={{
                 backgroundColor: isEditing ? '#E0E7FF' : '#D2E9FF',
@@ -314,10 +369,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                 </label>
                 <select
                   value={servicioSeleccionado?._id || ''}
-                  onChange={(e) => {
-                    const servicio = serviciosDisponibles.find(s => s._id === e.target.value);
-                    setServicioSeleccionado(servicio || null);
-                  }}
+                  onChange={handleServiceChange}
                   className="w-full p-2 border rounded-md text-sm"
                   style={{ borderColor: '#555BF6', color: '#555BF6' }}
                 >
@@ -342,13 +394,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                         <input
                           type="checkbox"
                           checked={variantesSeleccionadas.some(v => v._id === variante._id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setVariantesSeleccionadas([...variantesSeleccionadas, variante]);
-                            } else {
-                              setVariantesSeleccionadas(variantesSeleccionadas.filter(v => v._id !== variante._id));
-                            }
-                          }}
+                          onChange={(e) => handleVariantChange(variante, e.target.checked)}
                           className="text-sm"
                         />
                         <span className="text-sm" style={{ color: '#555BF6' }}>
@@ -383,13 +429,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                         <input
                           type="checkbox"
                           checked={promocionesSeleccionadas.includes(promocion._id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setPromocionesSeleccionadas([...promocionesSeleccionadas, promocion._id]);
-                            } else {
-                              setPromocionesSeleccionadas(promocionesSeleccionadas.filter(p => p !== promocion._id));
-                            }
-                          }}
+                          onChange={(e) => handlePromocionChange(promocion._id, e.target.checked)}
                           className="text-sm"
                         />
                         <span className="text-sm" style={{ color: '#555BF6' }}>
