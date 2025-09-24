@@ -763,54 +763,73 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
           {/* Modal de entrada de importe */}
           {activeInput && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-                <div className="text-center mb-4">
-                  <div className="text-lg font-medium" style={{ color: '#555BF6' }}>
+              <div
+                className="rounded-xl p-6 w-full max-w-sm shadow-2xl"
+                style={{ backgroundColor: '#FCFFA8' }}
+              >
+                <div className="text-center mb-6">
+                  <div className="text-xl font-bold mb-2" style={{ color: '#555BF6' }}>
                     {paymentMethods.find(m => m.id === activeInput)?.name}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm font-medium" style={{ color: '#555BF6', opacity: 0.8 }}>
                     Máximo: €{(importeRestante + (paymentAmounts[activeInput] || 0)).toFixed(2)}
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <input
-                    type="number"
-                    value={inputAmount}
-                    onChange={(e) => setInputAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full p-4 border rounded-lg text-xl text-center"
-                    style={{ borderColor: '#555BF6', color: '#555BF6' }}
-                    step="0.01"
-                    min="0"
-                    max={importeRestante + (paymentAmounts[activeInput] || 0)}
-                    autoFocus
-                  />
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleSetAllAmount}
-                      className="flex-1 py-3 rounded-lg border-2"
-                      style={{ borderColor: '#555BF6', color: '#555BF6' }}
-                      disabled={importeRestante <= 0}
-                    >
-                      Todo ({(importeRestante + (paymentAmounts[activeInput] || 0)).toFixed(2)}€)
-                    </button>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={inputAmount}
+                      onChange={(e) => setInputAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full p-4 border-2 rounded-xl text-xl text-center font-bold shadow-sm"
+                      style={{
+                        borderColor: '#555BF6',
+                        color: '#555BF6',
+                        backgroundColor: '#FAFAB0'
+                      }}
+                      step="0.01"
+                      min="0"
+                      max={importeRestante + (paymentAmounts[activeInput] || 0)}
+                      autoFocus
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl font-bold" style={{ color: '#555BF6' }}>
+                      €
+                    </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <button
+                    onClick={handleSetAllAmount}
+                    className="w-full py-3 rounded-xl border-2 font-medium transition-all hover:shadow-md"
+                    style={{
+                      borderColor: '#555BF6',
+                      color: '#555BF6',
+                      backgroundColor: '#FAFAB0'
+                    }}
+                    disabled={importeRestante <= 0}
+                  >
+                    Importe completo: {(importeRestante + (paymentAmounts[activeInput] || 0)).toFixed(2)}€
+                  </button>
+
+                  <div className="flex gap-3 pt-2">
                     <button
                       onClick={() => {
                         setActiveInput(null);
                         setInputAmount('');
                       }}
-                      className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-600"
+                      className="flex-1 py-3 rounded-xl border-2 font-medium transition-all hover:opacity-80"
+                      style={{
+                        borderColor: '#555BF6',
+                        color: '#555BF6',
+                        backgroundColor: 'rgba(250, 250, 176, 0.5)'
+                      }}
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleConfirmAmount}
-                      className="flex-1 py-3 rounded-lg"
+                      className="flex-1 py-3 rounded-xl font-bold transition-all hover:opacity-90 shadow-md"
                       style={{ backgroundColor: '#555BF6', color: 'white' }}
                     >
                       Confirmar
