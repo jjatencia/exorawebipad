@@ -3,7 +3,7 @@ import { apiClient } from './api';
 export interface UpdateCitaEstadoRequest {
   empresa: string;
   estadoCita: string;
-  citaId?: string; // Opcional, en caso de que se necesite en el payload
+  _id?: string; // Usar _id en lugar de citaId
 }
 
 export interface UpdateCitaEstadoResponse {
@@ -63,11 +63,11 @@ export class CitasService {
       const payload: UpdateCitaEstadoRequest = {
         empresa: empresaId,
         estadoCita: 'No presentado',
-        citaId: citaId
+        _id: citaId
       };
 
-      const response = await apiClient.post<UpdateCitaEstadoResponse>(
-        `/citas/`,
+      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+        `/citas`,
         payload
       );
 
@@ -90,11 +90,11 @@ export class CitasService {
       const payload: UpdateCitaEstadoRequest = {
         empresa: empresaId,
         estadoCita: estadoCita,
-        citaId: citaId
+        _id: citaId
       };
 
-      const response = await apiClient.post<UpdateCitaEstadoResponse>(
-        `/citas/`,
+      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+        `/citas`,
         payload
       );
 
