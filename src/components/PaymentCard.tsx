@@ -22,6 +22,10 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   onCompletePayment
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
+  const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [isDividedPayment, setIsDividedPayment] = useState<boolean>(false);
+  const [inputAmount, setInputAmount] = useState<string>('');
   const [precioConDescuento, setPrecioConDescuento] = useState<number>(appointment.importe);
   const [descuentoTotal, setDescuentoTotal] = useState<number>(0);
   const [loadingDescuentos, setLoadingDescuentos] = useState<boolean>(false);
@@ -254,6 +258,76 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
     setIsEditing(false);
   }, [estadoOriginal, appointment.importe, precioConDescuento]);
 
+  // Calcular importe total asignado y restante
+  const totalAsignado = Object.values(paymentAmounts).reduce((sum, amount) => sum + amount, 0);
+  const importeTotal = isEditing ? precioCalculado : precioConDescuento;
+  const importeRestante = Math.max(0, importeTotal - totalAsignado);
+  const esPagoCompleto = Math.abs(importeRestante) < 0.01;
+
+  const handlePaymentMethodClick = useCallback((methodId: string) => {
+    if (!isDividedPayment) {
+      // Comportamiento normal: seleccionar método completo
+      setSelectedPaymentMethod(methodId);
+      setPaymentAmounts({}); // Limpiar importes divididos
+    } else {
+      // Modo dividido: abrir modal para ese método
+      setActiveInput(methodId);
+      setInputAmount((paymentAmounts[methodId] || 0).toString());
+    }
+  }, [isDividedPayment, paymentAmounts]);
+
+  const handleLongPress = useCallback((methodId: string) => {
+    // Long press activa modo dividido y abre modal
+    setIsDividedPayment(true);
+    setSelectedPaymentMethod('');
+    setActiveInput(methodId);
+    setInputAmount('');
+  }, []);
+
+  const handleConfirmAmount = useCallback(() => {
+    if (!activeInput) return;
+
+    const numAmount = Math.max(0, parseFloat(inputAmount) || 0);
+    const maxAmount = importeRestante + (paymentAmounts[activeInput] || 0);
+    const finalAmount = Math.min(numAmount, maxAmount);
+
+    setPaymentAmounts(prev => ({
+      ...prev,
+      [activeInput]: finalAmount
+    }));
+
+    setActiveInput(null);
+    setInputAmount('');
+  }, [activeInput, inputAmount, importeRestante, paymentAmounts]);
+
+  const handleSetAllAmount = useCallback(() => {
+    if (!activeInput) return;
+
+    const maxAmount = importeRestante + (paymentAmounts[activeInput] || 0);
+    setInputAmount(maxAmount.toString());
+  }, [activeInput, importeRestante, paymentAmounts]);
+
+  const handleAmountChange = useCallback((methodId: string, amount: string) => {
+    const numAmount = Math.max(0, parseFloat(amount) || 0);
+    const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
+    const finalAmount = Math.min(numAmount, maxAmount);
+
+    setPaymentAmounts(prev => ({
+      ...prev,
+      [methodId]: finalAmount
+    }));
+  }, [importeRestante, paymentAmounts]);
+
+  const handleQuickAmount = useCallback((methodId: string, amount: number) => {
+    const maxAmount = importeRestante + (paymentAmounts[methodId] || 0);
+    const finalAmount = Math.min(amount, maxAmount);
+
+    setPaymentAmounts(prev => ({
+      ...prev,
+      [methodId]: finalAmount
+    }));
+  }, [importeRestante, paymentAmounts]);
+
   const paymentMethods = useMemo(
     () => [
       { id: 'Pago en efectivo', name: 'Efectivo', icon: CashIcon },
@@ -263,10 +337,19 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
     []
   );
 
-  const handleCompletePayment = () => {
-    if (!selectedPaymentMethod) {
-      return;
+  const handleCompletePayment = async () => {
+    if (!isDividedPayment) {
+      // Modo normal: requiere método seleccionado
+      if (!selectedPaymentMethod) {
+        return;
+      }
+    } else {
+      // Modo dividido: requiere pago completo
+      if (!esPagoCompleto) {
+        return;
+      }
     }
+
     if (onCompletePayment) {
       // Detectar si hay cambios comparando con los valores originales
       const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
@@ -285,11 +368,32 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
           servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
           variantes: variantesSeleccionadas,
           promocion: promocionesSeleccionadas,
-          importe: precioCalculado
+          importe: precioConDescuento
         };
       }
 
-      onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
+      if (!isDividedPayment) {
+        // Modo normal: un solo pago
+        onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
+      } else {
+        // Modo dividido: múltiples pagos
+        const pagosActivos = Object.entries(paymentAmounts)
+          .filter(([_, amount]) => amount > 0)
+          .map(([methodId, amount]) => ({ methodId, amount }));
+
+        if (pagosActivos.length === 1) {
+          onCompletePayment(appointment._id, pagosActivos[0].methodId, editedAppointment);
+        } else if (pagosActivos.length > 1) {
+          // Procesar pagos múltiples secuencialmente
+          for (const pago of pagosActivos) {
+            const appointmentConImporte = editedAppointment
+              ? { ...editedAppointment, importe: pago.amount }
+              : { ...appointment, importe: pago.amount };
+
+            onCompletePayment(appointment._id, pago.methodId, appointmentConImporte);
+          }
+        }
+      }
     }
   };
 
@@ -447,8 +551,9 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
               <button
                 onClick={() => {
                   setIsEditing(false);
-                  // Aplicar los cambios al precio final
+                  // precioCalculado ya incluye los descuentos y variantes calculados en tiempo real
                   setPrecioConDescuento(precioCalculado);
+                  // descuentoTotal ya está calculado correctamente por el useEffect de cálculo
                 }}
                 className="w-full py-2 rounded-md text-sm font-medium transition-colors"
                 style={{
@@ -519,7 +624,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
                   </>
                 ) : (
                   <div className="text-2xl font-bold" style={{ color: '#555BF6' }}>
-                    €{(isEditing ? precioCalculado : appointment.importe).toFixed(2)}
+                    €{(isEditing ? precioCalculado : precioConDescuento).toFixed(2)}
                   </div>
                 )}
               </>
@@ -528,54 +633,172 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 
           {/* Payment Methods */}
           <div className="space-y-3">
-            <div className="text-base font-medium" style={{ color: '#555BF6' }}>Método de pago:</div>
+            <div className="flex justify-between items-center">
+              <div className="text-base font-medium" style={{ color: '#555BF6' }}>
+                Método de pago:
+              </div>
+              {isDividedPayment && (
+                <div className="text-sm" style={{ color: '#555BF6' }}>
+                  Restante: €{importeRestante.toFixed(2)}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3 justify-between">
               {paymentMethods.map((method) => {
                 const IconComponent = method.icon;
+                const isSelected = selectedPaymentMethod === method.id;
+                const hasAmount = paymentAmounts[method.id] > 0;
+
                 return (
                   <button
                     key={method.id}
-                    onClick={() => setSelectedPaymentMethod(method.id)}
+                    onClick={() => handlePaymentMethodClick(method.id)}
+                    onTouchStart={(e) => {
+                      const timeoutId = setTimeout(() => {
+                        handleLongPress(method.id);
+                        if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+                      }, 500);
+
+                      const handleTouchEnd = () => {
+                        clearTimeout(timeoutId);
+                        e.currentTarget.removeEventListener('touchend', handleTouchEnd);
+                        e.currentTarget.removeEventListener('touchcancel', handleTouchEnd);
+                      };
+
+                      e.currentTarget.addEventListener('touchend', handleTouchEnd);
+                      e.currentTarget.addEventListener('touchcancel', handleTouchEnd);
+                    }}
                     className={`flex-1 p-4 rounded-lg border-2 flex items-center justify-center relative transition-all ${
-                      selectedPaymentMethod === method.id
+                      (!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)
                         ? 'border-white shadow-md'
                         : 'border-white/50 hover:opacity-80'
                     }`}
                     style={{
-                      backgroundColor: selectedPaymentMethod === method.id ? '#FAFAB0' : 'rgba(250, 250, 176, 0.5)'
+                      backgroundColor: ((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount))
+                        ? '#FAFAB0'
+                        : 'rgba(250, 250, 176, 0.5)'
                     }}
-                    title={method.name}
+                    title={`${method.name} - Mantén presionado para dividir pago`}
                   >
                     <IconComponent size={24} style={{ color: '#555BF6' }} />
-                    {selectedPaymentMethod === method.id && (
+                    {((!isDividedPayment && isSelected) || (isDividedPayment && hasAmount)) && (
                       <div className="absolute top-1 right-1">
                         <CheckIcon size={14} strokeWidth={3} style={{ color: '#555BF6' }} />
+                      </div>
+                    )}
+                    {isDividedPayment && hasAmount && (
+                      <div className="absolute bottom-1 left-1 right-1 text-center">
+                        <div className="text-xs font-medium bg-white/80 rounded px-1" style={{ color: '#555BF6' }}>
+                          €{paymentAmounts[method.id].toFixed(2)}
+                        </div>
                       </div>
                     )}
                   </button>
                 );
               })}
             </div>
+
+            {isDividedPayment && (
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    setIsDividedPayment(false);
+                    setPaymentAmounts({});
+                    setSelectedPaymentMethod('');
+                    setActiveInput(null);
+                  }}
+                  className="text-xs px-3 py-1 rounded border"
+                  style={{ borderColor: '#555BF6', color: '#555BF6' }}
+                >
+                  Volver a pago único
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Modal de entrada de importe */}
+          {activeInput && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+                <div className="text-center mb-4">
+                  <div className="text-lg font-medium" style={{ color: '#555BF6' }}>
+                    {paymentMethods.find(m => m.id === activeInput)?.name}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Máximo: €{(importeRestante + (paymentAmounts[activeInput] || 0)).toFixed(2)}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <input
+                    type="number"
+                    value={inputAmount}
+                    onChange={(e) => setInputAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-4 border rounded-lg text-xl text-center"
+                    style={{ borderColor: '#555BF6', color: '#555BF6' }}
+                    step="0.01"
+                    min="0"
+                    max={importeRestante + (paymentAmounts[activeInput] || 0)}
+                    autoFocus
+                  />
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSetAllAmount}
+                      className="flex-1 py-3 rounded-lg border-2"
+                      style={{ borderColor: '#555BF6', color: '#555BF6' }}
+                      disabled={importeRestante <= 0}
+                    >
+                      Todo ({(importeRestante + (paymentAmounts[activeInput] || 0)).toFixed(2)}€)
+                    </button>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setActiveInput(null);
+                        setInputAmount('');
+                      }}
+                      className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-600"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleConfirmAmount}
+                      className="flex-1 py-3 rounded-lg"
+                      style={{ backgroundColor: '#555BF6', color: 'white' }}
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex-shrink-0 space-y-2">
           <button
             onClick={handleCompletePayment}
-            disabled={!selectedPaymentMethod}
+            disabled={isDividedPayment ? !esPagoCompleto : !selectedPaymentMethod}
             className={`w-full py-3 rounded-lg font-bold text-base transition-all ${
-              selectedPaymentMethod
+              (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
                 ? 'hover:opacity-90 shadow-lg'
                 : 'cursor-not-allowed'
             }`}
             style={
-              selectedPaymentMethod
+              (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
                 ? { backgroundColor: '#555BF6', color: 'white' }
                 : { backgroundColor: '#d1d5db', color: '#6b7280' }
             }
           >
-            Completar Pago
+            {isDividedPayment && totalAsignado > 0
+              ? `Completar Pago (€${totalAsignado.toFixed(2)})`
+              : 'Completar Pago'
+            }
           </button>
         </div>
       </div>
