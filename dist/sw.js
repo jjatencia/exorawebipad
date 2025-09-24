@@ -84,10 +84,10 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-B6NWAdEC.js",
+    "url": "assets/index-BSVrQPwj.js",
     "revision": null
   }, {
-    "url": "assets/index-DafujoJG.css",
+    "url": "assets/index-C6Bd3YN1.css",
     "revision": null
   }, {
     "url": "assets/router-DOm5wjR5.js",
@@ -121,7 +121,7 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "913742c445e518e2008a4fa83fbcd180"
+    "revision": "cd7214961d34ecc6583e1500b8883a20"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"

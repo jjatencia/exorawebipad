@@ -6,6 +6,7 @@ import { useAppointmentStore } from '../stores/appointmentStore';
 // import { formatDateForAPILocal } from '../utils/helpers'; // No longer needed after removing date restriction
 import { createVenta } from '../services/ventasService';
 import { MonederoService } from '../services/monederoService';
+import { CitasService } from '../services/citasService';
 import { Appointment, ViewMode } from '../types';
 
 interface UseDashboardResult {
@@ -30,6 +31,7 @@ interface UseDashboardResult {
     initiatePaymentMode: () => void;
     completePayment: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => Promise<void>;
     completeWalletPayment: (appointmentId: string, editedAppointment?: Appointment) => Promise<void>;
+    markNoShow: (appointmentId: string) => Promise<void>;
     cancelPayment: () => void;
     logout: () => void;
     selectAppointment: (appointment: Appointment) => void;
@@ -258,6 +260,40 @@ export const useDashboard = (): UseDashboardResult => {
     [currentDate, currentIndex, filteredAppointments, fetchAppointments, resetPaymentMode, logoutStore, navigate]
   );
 
+  const markNoShow = useCallback(
+    async (appointmentId: string) => {
+      const appointment = filteredAppointments.find(apt => apt._id === appointmentId);
+
+      if (!appointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      try {
+        toast.loading('Marcando como no presentado...');
+
+        await CitasService.marcarNoPresentado(appointmentId, appointment.empresa);
+
+        toast.dismiss();
+        toast.success('Cita marcada como no presentado');
+        fetchAppointments(currentDate);
+      } catch (error: any) {
+        toast.dismiss();
+        console.error('Error marcando cita como no presentado:', error);
+
+        // Handle auth errors gracefully
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al marcar cita como no presentado');
+        }
+      }
+    },
+    [currentDate, filteredAppointments, fetchAppointments, logoutStore, navigate]
+  );
+
   const cancelPayment = useCallback(() => {
     resetPaymentMode();
     toast('Pago cancelado');
@@ -309,6 +345,7 @@ export const useDashboard = (): UseDashboardResult => {
       initiatePaymentMode,
       completePayment,
       completeWalletPayment,
+      markNoShow,
       cancelPayment,
       logout,
       selectAppointment

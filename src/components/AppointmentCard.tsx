@@ -59,13 +59,15 @@ interface AppointmentCardProps {
   isActive?: boolean;
   onClick?: () => void;
   onActivatePayment?: () => void;
+  onMarkNoShow?: (appointmentId: string) => void;
 }
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({
   appointment,
   style,
   isActive = false,
-  onClick
+  onClick,
+  onMarkNoShow
 }) => {
   const isDisabled = isAppointmentDisabled(appointment);
   const primaryService = appointment.servicios[0];
@@ -311,6 +313,26 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             </div>
           )}
         </div>
+
+        {/* Bottom section - Action buttons */}
+        {!isDisabled && !appointment.pagada && onMarkNoShow && (
+          <div className="flex-shrink-0 pt-3 px-4 pb-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkNoShow(appointment._id);
+              }}
+              className="w-full py-2.5 rounded-xl font-medium text-sm transition-all hover:opacity-80 border-2"
+              style={{
+                borderColor: '#DC2626',
+                backgroundColor: '#FEF2F2',
+                color: '#DC2626'
+              }}
+            >
+              No presentado
+            </button>
+          </div>
+        )}
       </div>
     </animated.div>
   );

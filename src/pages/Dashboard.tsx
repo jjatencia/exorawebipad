@@ -106,6 +106,7 @@ const Dashboard: React.FC = () => {
                   paymentMode={paymentMode}
                   onCompletePayment={handlers.completePayment}
                   onWalletPayment={handlers.completeWalletPayment}
+                  onMarkNoShow={handlers.markNoShow}
                 />
               </div>
             ) : (

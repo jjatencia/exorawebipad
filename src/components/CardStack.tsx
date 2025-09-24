@@ -14,6 +14,7 @@ interface CardStackProps {
   paymentMode?: boolean;
   onCompletePayment?: (appointmentId: string, metodoPago: string) => void;
   onWalletPayment?: (appointmentId: string, editedAppointment?: Appointment) => void;
+  onMarkNoShow?: (appointmentId: string) => void;
 }
 
 // Style constants - Maximizar el espacio disponible entre header y footer
@@ -57,7 +58,8 @@ const CardStack: React.FC<CardStackProps> = ({
   onRefresh,
   paymentMode = false,
   onCompletePayment,
-  onWalletPayment
+  onWalletPayment,
+  onMarkNoShow
 }) => {
   const currentAppointment = useMemo(
     () => appointments[currentIndex],
@@ -120,6 +122,7 @@ const CardStack: React.FC<CardStackProps> = ({
           <AppointmentCard
             appointment={prevAppointment}
             isActive={false}
+            onMarkNoShow={onMarkNoShow}
           />
         </div>
       )}
@@ -133,6 +136,7 @@ const CardStack: React.FC<CardStackProps> = ({
           <AppointmentCard
             appointment={nextAppointment}
             isActive={false}
+            onMarkNoShow={onMarkNoShow}
           />
         </div>
       )}
@@ -162,6 +166,7 @@ const CardStack: React.FC<CardStackProps> = ({
           <AppointmentCard
             appointment={currentAppointment}
             isActive={true}
+            onMarkNoShow={onMarkNoShow}
           />
         </div>
 
