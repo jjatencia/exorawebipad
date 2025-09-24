@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Appointment } from '../types';
 import { ClockIcon, ServiceIcon, LocationIcon } from './icons';
 
@@ -245,15 +245,32 @@ const DayView: React.FC<DayViewProps> = ({
 
 // Componente para mostrar la línea de tiempo actual
 const CurrentTimeLine: React.FC<{ selectedDate: string; timeRange: { start: number; end: number } | null }> = ({ selectedDate, timeRange }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Actualizar la hora cada minuto
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date());
+    };
+
+    // Actualizar inmediatamente
+    updateTime();
+
+    // Configurar intervalo para actualizar cada minuto
+    const interval = setInterval(updateTime, 60000);
+
+    // Limpiar intervalo al desmontar
+    return () => clearInterval(interval);
+  }, []);
+
   const currentTimePosition = useMemo(() => {
-    const now = new Date();
     const today = new Date().toISOString().split('T')[0];
 
     // Solo mostrar si es el día actual y hay un rango definido
     if (selectedDate !== today || !timeRange) return null;
 
-    const hour = now.getHours();
-    const minute = now.getMinutes();
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
 
     // Solo mostrar si la hora actual está dentro del rango dinámico
     if (hour < timeRange.start || hour > timeRange.end) return null;
@@ -262,7 +279,7 @@ const CurrentTimeLine: React.FC<{ selectedDate: string; timeRange: { start: numb
     const totalMinutesFromStart = (hour - timeRange.start) * 60 + minute;
 
     return totalMinutesFromStart * 2;
-  }, [selectedDate, timeRange]);
+  }, [selectedDate, timeRange, currentTime]);
 
   if (currentTimePosition === null) return null;
 
