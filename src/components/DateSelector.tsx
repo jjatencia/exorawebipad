@@ -40,7 +40,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
   }, []);
 
   return (
-    <div className="relative z-[100]">
+    <div className="relative z-10">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
