@@ -3,6 +3,7 @@ import { animated } from '@react-spring/web';
 import { Appointment } from '../types';
 import { isAppointmentDisabled } from '../utils/helpers';
 import { PromocionesService, Promocion } from '../services/promocionesService';
+import ConfirmationModal from './ConfirmationModal';
 import {
   DiscountIcon,
   LocationIcon,
@@ -72,6 +73,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   const isDisabled = isAppointmentDisabled(appointment);
   const primaryService = appointment.servicios[0];
   const [promociones, setPromociones] = useState<Promocion[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Cargar promociones de la empresa
   useEffect(() => {
@@ -138,6 +140,21 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
     () => normalizeComments(appointment.usuario?.comentarios),
     [appointment.usuario?.comentarios]
   );
+
+  const handleNoShowClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmNoShow = () => {
+    setShowConfirmModal(false);
+    if (onMarkNoShow) {
+      onMarkNoShow(appointment._id);
+    }
+  };
+
+  const handleCancelNoShow = () => {
+    setShowConfirmModal(false);
+  };
 
   const cardSizeStyle = {
     width: 'min(100%, 560px)',
@@ -320,7 +337,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onMarkNoShow(appointment._id);
+                handleNoShowClick();
               }}
               className="w-full py-2.5 rounded-xl font-medium text-sm transition-all hover:opacity-80 border-2"
               style={{
@@ -333,6 +350,18 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             </button>
           </div>
         )}
+
+        {/* Modal de confirmación para "No presentado" */}
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          title="Marcar como No Presentado"
+          message={`¿Estás seguro de que deseas marcar la cita de ${appointment.usuario.nombre} como "No presentado"? Esta acción no se puede deshacer.`}
+          confirmText="Sí, marcar como No Presentado"
+          cancelText="Cancelar"
+          type="danger"
+          onConfirm={handleConfirmNoShow}
+          onCancel={handleCancelNoShow}
+        />
       </div>
     </animated.div>
   );
