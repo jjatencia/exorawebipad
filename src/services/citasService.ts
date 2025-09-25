@@ -4,10 +4,6 @@ import { Appointment } from '../types';
 export interface UpdateCitaEstadoRequest {
   empresa: string;
   estadoCita: string;
-  sucursal: string;
-  usuario: string;
-  fecha: string;
-  servicios: string[];
 }
 
 export interface UpdateCitaEstadoResponse {
@@ -66,16 +62,12 @@ export class CitasService {
     try {
       const payload: UpdateCitaEstadoRequest = {
         empresa: appointment.empresa,
-        estadoCita: 'No presentado',
-        sucursal: appointment.sucursal._id,
-        usuario: appointment.usuario._id,
-        fecha: appointment.fecha,
-        servicios: appointment.servicios.map(s => s._id)
+        estadoCita: 'No presentado'
       };
 
-      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+      const response = await apiClient.delete<UpdateCitaEstadoResponse>(
         `/citas/${appointment._id}`,
-        payload
+        { data: payload }
       );
 
       return response.data;
@@ -95,16 +87,12 @@ export class CitasService {
     try {
       const payload: UpdateCitaEstadoRequest = {
         empresa: appointment.empresa,
-        estadoCita: estadoCita,
-        sucursal: appointment.sucursal._id,
-        usuario: appointment.usuario._id,
-        fecha: appointment.fecha,
-        servicios: appointment.servicios.map(s => s._id)
+        estadoCita: estadoCita
       };
 
-      const response = await apiClient.put<UpdateCitaEstadoResponse>(
+      const response = await apiClient.delete<UpdateCitaEstadoResponse>(
         `/citas/${appointment._id}`,
-        payload
+        { data: payload }
       );
 
       return response.data;
