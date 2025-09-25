@@ -90,7 +90,7 @@ const DayView: React.FC<DayViewProps> = ({
 
       // Con slots de 80px cada 30min, cada minuto = 80/30 = 2.67px
       const pixelsPerMinute = 80 / 30;
-      const heightPx = Math.max(60, duration * pixelsPerMinute);
+      const heightPx = Math.max(40, duration * pixelsPerMinute);
 
       return {
         ...appointment,
@@ -212,44 +212,73 @@ const DayView: React.FC<DayViewProps> = ({
                       zIndex: 10
                     }}
                   >
-                    <div className="h-full flex flex-col justify-start overflow-hidden">
-                      {/* Primera línea: Hora y Cliente - Más grande para iPad */}
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-gray-700 bg-white px-2 py-1 rounded">
+                    <div className="h-full flex flex-col justify-start overflow-hidden p-1">
+                      {/* Header con hora y estado de pago */}
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-white bg-gray-800 px-2 py-1 rounded">
                           {appointment.timeDisplay}
                         </span>
-                        <span className="text-base font-bold truncate ml-3 group-hover:text-exora-primary transition-colors" style={{ color: '#555BF6' }}>
-                          {appointment.usuario.nombre}
-                        </span>
-                      </div>
-
-                      {/* Segunda línea: Servicio - Más prominente */}
-                      <div className="flex items-center space-x-2 mb-2">
-                        <ServiceIcon size={16} className="text-gray-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-800 truncate font-semibold">
-                          {appointment.servicios[0]?.nombre || 'Sin servicio'}
-                        </span>
-                      </div>
-
-                      {/* Tercera línea: Profesional - Más visible */}
-                      <div className="flex items-center space-x-2 mb-2">
-                        <ProfessionalIcon size={14} className="text-gray-500 flex-shrink-0" />
-                        <span className="text-sm text-gray-700 truncate">
-                          {appointment.profesional.nombre}
-                        </span>
-                      </div>
-
-                      {/* Cuarta línea: Sucursal y duración - Siempre visible en iPad */}
-                      <div className="flex items-center justify-between text-sm text-gray-600 mt-auto">
-                        <div className="flex items-center space-x-2">
-                          <LocationIcon size={12} className="text-gray-500" />
-                          <span className="font-medium">{appointment.sucursal.nombre}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <ClockIcon size={12} className="text-gray-500" />
-                          <span className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded">
-                            {appointment.durationMinutes}min
+                        <div className="flex items-center space-x-1">
+                          <span className={`text-xs px-2 py-1 rounded font-bold ${
+                            appointment.pagada
+                              ? 'bg-green-500 text-white'
+                              : 'bg-yellow-400 text-gray-800'
+                          }`}>
+                            {appointment.pagada ? 'PAGADO' : 'PENDIENTE'}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Información principal */}
+                      <div className="flex-1 flex flex-col justify-start space-y-1">
+                        {/* Cliente */}
+                        <div className="text-base font-bold text-gray-900 truncate">
+                          {appointment.usuario.nombre}
+                        </div>
+
+                        {/* Servicios - Mostrar hasta 2 servicios */}
+                        <div className="space-y-1">
+                          {appointment.servicios.slice(0, 2).map((servicio, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-1 flex-1 min-w-0">
+                                <ServiceIcon size={12} className="text-gray-500 flex-shrink-0" />
+                                <span className="text-xs text-gray-700 truncate font-medium">
+                                  {servicio.nombre}
+                                </span>
+                              </div>
+                              <span className="text-xs font-bold text-exora-primary ml-2">
+                                {servicio.precio.toFixed(0)}€
+                              </span>
+                            </div>
+                          ))}
+                          {appointment.servicios.length > 2 && (
+                            <div className="text-xs text-gray-500">
+                              +{appointment.servicios.length - 2} más...
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Profesional */}
+                        <div className="flex items-center space-x-1">
+                          <ProfessionalIcon size={12} className="text-gray-500 flex-shrink-0" />
+                          <span className="text-xs text-gray-600 truncate">
+                            {appointment.profesional.nombre}
+                          </span>
+                        </div>
+
+                        {/* Footer con importe total, duración y sucursal */}
+                        <div className="mt-auto pt-1 border-t border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2 text-xs text-gray-600">
+                              <LocationIcon size={10} className="text-gray-400" />
+                              <span>{appointment.sucursal.nombre}</span>
+                              <ClockIcon size={10} className="text-gray-400" />
+                              <span>{appointment.durationMinutes}'</span>
+                            </div>
+                            <div className="text-sm font-bold text-exora-primary">
+                              {appointment.importe.toFixed(2)}€
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -297,8 +326,12 @@ const CurrentTimeLine: React.FC<{ selectedDate: string; timeRange: { start: numb
     const hour = currentTime.getHours();
     const minute = currentTime.getMinutes();
 
-    // Solo mostrar si la hora actual está dentro del rango dinámico
-    if (hour < timeRange.start || hour > timeRange.end) return null;
+    // Extender el rango para mostrar la línea aunque esté ligeramente fuera
+    const extendedStart = Math.max(0, timeRange.start - 1);
+    const extendedEnd = Math.min(23, timeRange.end + 1);
+
+    // Solo mostrar si la hora actual está dentro del rango extendido
+    if (hour < extendedStart || hour > extendedEnd) return null;
 
     // Calcular posición exacta en minutos desde el inicio del rango dinámico
     // Cada slot de 30min = 80px, entonces cada minuto = 80/30 = 2.67px
