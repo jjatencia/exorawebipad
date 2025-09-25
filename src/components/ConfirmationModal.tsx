@@ -27,25 +27,25 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     switch (type) {
       case 'danger':
         return {
-          icon: '⚠️',
+          icon: '!',
           confirmButton: '#DC2626',
           confirmButtonHover: '#B91C1C'
         };
       case 'warning':
         return {
-          icon: '⚠️',
+          icon: '!',
           confirmButton: '#D97706',
           confirmButtonHover: '#B45309'
         };
       case 'info':
         return {
-          icon: 'ℹ️',
+          icon: 'i',
           confirmButton: '#2563EB',
           confirmButtonHover: '#1D4ED8'
         };
       default:
         return {
-          icon: '⚠️',
+          icon: '!',
           confirmButton: '#D97706',
           confirmButtonHover: '#B45309'
         };
@@ -58,7 +58,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
         <div className="text-center mb-6">
-          <div className="text-4xl mb-3">{colors.icon}</div>
+          <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4"
+               style={{ backgroundColor: `${colors.confirmButton}20` }}>
+            <div className="text-2xl font-bold"
+                 style={{ color: colors.confirmButton }}>
+              {colors.icon}
+            </div>
+          </div>
           <h3 className="text-xl font-bold mb-2 text-gray-900">
             {title}
           </h3>
