@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { useAppointmentStore } from '../stores/appointmentStore';
+import { createVenta } from '../services/ventasService';
+import { MonederoService } from '../services/monederoService';
+import { CitasService } from '../services/citasService';
 import { Appointment } from '../types';
 
 interface UseDashboardResult {
@@ -12,16 +16,22 @@ interface UseDashboardResult {
   error: string | null;
   showPaidOnly: boolean;
   filteredAppointments: Appointment[];
+  selectedAppointment: Appointment | null;
   handlers: {
     changeDate: (date: string) => void;
     refreshAppointments: () => void;
     logout: () => void;
     selectAppointment: (appointment: Appointment) => void;
+    closeAppointmentModal: () => void;
+    completePayment: (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => Promise<void>;
+    completeWalletPayment: (appointmentId: string, editedAppointment?: Appointment) => Promise<void>;
+    markNoShow: (appointmentId: string) => Promise<void>;
   };
 }
 
 export const useDashboard = (): UseDashboardResult => {
   const navigate = useNavigate();
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const { user, isAuthenticated, logout: logoutStore, checkAuth } = useAuthStore();
 
@@ -71,11 +81,124 @@ export const useDashboard = (): UseDashboardResult => {
 
   const selectAppointment = useCallback(
     (appointment: Appointment) => {
-      // En la versión iPad, simplemente mostrar detalles o abrir modal
-      console.log('Cita seleccionada:', appointment);
-      // TODO: Implementar modal de detalles de cita para iPad
+      setSelectedAppointment(appointment);
     },
     []
+  );
+
+  const closeAppointmentModal = useCallback(() => {
+    setSelectedAppointment(null);
+  }, []);
+
+  const completePayment = useCallback(
+    async (appointmentId: string, metodoPago: string, editedAppointment?: Appointment) => {
+      const appointment = selectedAppointment || filteredAppointments.find(apt => apt._id === appointmentId);
+
+      if (!appointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      try {
+        toast.loading('Procesando pago...');
+
+        const appointmentToProcess = editedAppointment || appointment;
+        await createVenta(appointmentToProcess, metodoPago);
+
+        toast.dismiss();
+        toast.success('Pago completado exitosamente');
+        fetchAppointments(currentDate);
+      } catch (error: any) {
+        toast.dismiss();
+        console.error('Error al procesar el pago:', error);
+
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al procesar el pago');
+        }
+      }
+    },
+    [selectedAppointment, filteredAppointments, currentDate, fetchAppointments, logoutStore, navigate]
+  );
+
+  const completeWalletPayment = useCallback(
+    async (appointmentId: string, editedAppointment?: Appointment) => {
+      const appointment = selectedAppointment || filteredAppointments.find(apt => apt._id === appointmentId);
+
+      if (!appointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      try {
+        toast.loading('Procesando pago con monedero...');
+
+        const appointmentToProcess = editedAppointment || appointment;
+
+        if (!MonederoService.tieneSaldoSuficiente(appointmentToProcess.usuario.saldoMonedero, appointmentToProcess.importe)) {
+          toast.dismiss();
+          toast.error('Saldo insuficiente en el monedero');
+          return;
+        }
+
+        await MonederoService.procesarPagoMonedero(
+          appointmentToProcess.usuario._id,
+          appointmentToProcess.empresa,
+          appointmentToProcess._id,
+          appointmentToProcess.importe
+        );
+
+        toast.dismiss();
+        toast.success('Pago con monedero completado exitosamente');
+        fetchAppointments(currentDate);
+      } catch (error: any) {
+        toast.dismiss();
+        console.error('Error al procesar el pago con monedero:', error);
+
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al procesar el pago con monedero');
+        }
+      }
+    },
+    [selectedAppointment, filteredAppointments, currentDate, fetchAppointments, logoutStore, navigate]
+  );
+
+  const markNoShow = useCallback(
+    async (appointmentId: string) => {
+      const appointment = selectedAppointment || filteredAppointments.find(apt => apt._id === appointmentId);
+
+      if (!appointment) {
+        toast.error('No se encontró la cita');
+        return;
+      }
+
+      try {
+        toast.loading('Marcando como no presentado...');
+        await CitasService.marcarNoPresentado(appointment);
+        toast.dismiss();
+        toast.success('Cita marcada como no presentado');
+        fetchAppointments(currentDate);
+      } catch (error: any) {
+        toast.dismiss();
+        console.error('Error marcando cita como no presentado:', error);
+
+        if (error.authError || error.status === 401) {
+          toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+          logoutStore();
+          navigate('/login');
+        } else {
+          toast.error(error.message || 'Error al marcar cita como no presentado');
+        }
+      }
+    },
+    [selectedAppointment, filteredAppointments, currentDate, fetchAppointments, logoutStore, navigate]
   );
 
   const refreshAppointments = useCallback(() => {
@@ -108,11 +231,16 @@ export const useDashboard = (): UseDashboardResult => {
     error,
     showPaidOnly,
     filteredAppointments,
+    selectedAppointment,
     handlers: {
       changeDate,
       refreshAppointments,
       logout,
-      selectAppointment
+      selectAppointment,
+      closeAppointmentModal,
+      completePayment,
+      completeWalletPayment,
+      markNoShow
     }
   };
 };

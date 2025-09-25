@@ -84,22 +84,25 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "url": "404.html",
     "revision": "33f9628aea58511b4d7c3ddc8e09a8f6"
   }, {
-    "url": "assets/index-C6Bd3YN1.css",
+    "url": "apple-touch-icon.png",
+    "revision": "ea6c85922ac1c7757f787aa1dbdfe573"
+  }, {
+    "url": "assets/index-D4RzeDdd.js",
     "revision": null
   }, {
-    "url": "assets/index-X0Uzf5rm.js",
+    "url": "assets/index-XiLsTcGn.css",
     "revision": null
   }, {
-    "url": "assets/router-DOm5wjR5.js",
+    "url": "assets/router-abpA6dKq.js",
     "revision": null
   }, {
-    "url": "assets/ui-DJNPBiSa.js",
+    "url": "assets/ui-BtEQG0-K.js",
     "revision": null
   }, {
-    "url": "assets/utils-Dq7FJXLK.js",
+    "url": "assets/utils-JmfPRjDR.js",
     "revision": null
   }, {
-    "url": "assets/vendor-BnAv-nsF.js",
+    "url": "assets/vendor-DsHMn-aP.js",
     "revision": null
   }, {
     "url": "Captura de pantalla 2025-09-16 a las 23.43.22.png",
@@ -121,7 +124,7 @@ define(['./workbox-6856d41d'], (function (workbox) { 'use strict';
     "revision": "cde90bd6b9783d445ccd8b52c81c97a8"
   }, {
     "url": "index.html",
-    "revision": "776cf4814aa0c2ac965bfd866d3f4ef0"
+    "revision": "b49fb803becf335d6ea21002c21fc8a3"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"

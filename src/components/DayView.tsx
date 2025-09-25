@@ -88,8 +88,9 @@ const DayView: React.FC<DayViewProps> = ({
       // Calcular posición exacta en minutos desde el inicio del rango dinámico
       const startMinutes = (hour - timeRange.start) * 60 + minute;
 
-      // Calcular altura proporcional (2 píxeles por minuto para mejor visualización)
-      const heightPx = Math.max(40, duration * 2);
+      // Con slots de 80px cada 30min, cada minuto = 80/30 = 2.67px
+      const pixelsPerMinute = 80 / 30;
+      const heightPx = Math.max(60, duration * pixelsPerMinute);
 
       return {
         ...appointment,
@@ -99,6 +100,7 @@ const DayView: React.FC<DayViewProps> = ({
         startMinutes,
         durationMinutes: duration,
         heightPx,
+        pixelsPerMinute,
         timeDisplay: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
       };
     });
@@ -157,13 +159,13 @@ const DayView: React.FC<DayViewProps> = ({
         ) : (
           <div className="relative my-6">
             {/* Timeline continuo optimizado para iPad */}
-            <div className="relative bg-white rounded-lg shadow-sm border border-gray-100" style={{ height: `${timeSlots.length * 80}px` }}>
+            <div className="relative bg-white rounded-lg shadow-sm border border-gray-100" style={{ height: `${timeSlots.length * 80}px`, minHeight: '600px' }}>
               {/* Grid de horarios de fondo */}
             <div className="grid grid-cols-1 gap-0">
               {timeSlots.map((slot) => (
                 <div
                   key={`${slot.hour}-${slot.minute}`}
-                  className="border-b border-gray-50 h-[80px] flex hover:bg-gray-50/50 transition-colors"
+                  className="border-b border-gray-100 h-[80px] flex hover:bg-gray-50/50 transition-colors relative"
                 >
                   {/* Columna de hora más ancha para iPad */}
                   <div className="w-24 flex-shrink-0 p-3 border-r border-gray-100 bg-gray-50/30">
@@ -179,7 +181,11 @@ const DayView: React.FC<DayViewProps> = ({
 
                   {/* Columna de contenido más espaciosa */}
                   <div className="flex-1 relative">
-                    <div className="absolute inset-0 border-l-2 border-gray-100 ml-6"></div>
+                    <div className="absolute inset-0 border-l-2 border-gray-200 ml-6"></div>
+                    {/* Líneas de minutos cada 15 minutos */}
+                    {slot.minute === 15 && (
+                      <div className="absolute right-0 top-1/2 w-3 h-px bg-gray-300 -translate-y-0.5"></div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -188,9 +194,10 @@ const DayView: React.FC<DayViewProps> = ({
             {/* Citas posicionadas absolutamente - optimizado para iPad */}
             <div className="absolute top-0 left-24 right-0 bottom-0">
               {processedAppointments.map((appointment) => {
-                // Posición vertical exacta basada en minutos reales (80px por hora = 1.33px por minuto)
-                const topPosition = appointment.startMinutes * 1.33;
-                const heightPx = Math.max(60, appointment.durationMinutes * 1.33);
+                // Posición vertical exacta basada en minutos reales
+                // Cada slot de 30min = 80px, entonces cada minuto = 80/30 = 2.67px
+                const topPosition = appointment.startMinutes * appointment.pixelsPerMinute;
+                const heightPx = appointment.heightPx;
 
                 return (
                   <button
@@ -293,24 +300,31 @@ const CurrentTimeLine: React.FC<{ selectedDate: string; timeRange: { start: numb
     // Solo mostrar si la hora actual está dentro del rango dinámico
     if (hour < timeRange.start || hour > timeRange.end) return null;
 
-    // Calcular posición exacta en minutos desde el inicio del rango dinámico (2px por minuto)
+    // Calcular posición exacta en minutos desde el inicio del rango dinámico
+    // Cada slot de 30min = 80px, entonces cada minuto = 80/30 = 2.67px
+    const pixelsPerMinute = 80 / 30;
     const totalMinutesFromStart = (hour - timeRange.start) * 60 + minute;
 
-    return totalMinutesFromStart * 2;
+    return totalMinutesFromStart * pixelsPerMinute;
   }, [selectedDate, timeRange, currentTime]);
 
   if (currentTimePosition === null) return null;
 
   return (
     <div
-      className="absolute left-0 right-0 z-10 pointer-events-none"
+      className="absolute left-0 right-0 z-20 pointer-events-none"
       style={{ top: `${currentTimePosition}px` }}
     >
       <div className="flex items-center">
-        <div className="w-16 flex justify-center">
-          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+        <div className="w-24 flex justify-center">
+          <div className="flex items-center bg-red-500 text-white px-2 py-1 rounded text-xs font-bold shadow-lg">
+            <div className="w-2 h-2 bg-white rounded-full mr-1"></div>
+            {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          </div>
         </div>
-        <div className="flex-1 h-0.5 bg-red-500"></div>
+        <div className="flex-1 h-1 bg-red-500 shadow-sm relative">
+          <div className="absolute right-0 top-0 w-0 h-0 border-l-4 border-l-red-500 border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+        </div>
       </div>
     </div>
   );

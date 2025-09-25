@@ -2,6 +2,7 @@ import React from 'react';
 import DayView from '../components/DayView';
 import DateSelector from '../components/DateSelector';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AppointmentModal from '../components/AppointmentModal';
 import { LogoutIcon, CalendarIcon, UserIcon, SettingsIcon, StatsIcon } from '../components/icons';
 import { useDashboard } from '../hooks/useDashboard';
 
@@ -14,6 +15,7 @@ const Dashboard: React.FC = () => {
     error,
     showPaidOnly,
     filteredAppointments,
+    selectedAppointment,
     handlers
   } = useDashboard();
 
@@ -123,6 +125,14 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
+      {/* Modal de detalles de cita */}
+      <AppointmentModal
+        appointment={selectedAppointment}
+        onClose={handlers.closeAppointmentModal}
+        onCompletePayment={handlers.completePayment}
+        onCompleteWalletPayment={handlers.completeWalletPayment}
+        onMarkNoShow={handlers.markNoShow}
+      />
     </div>
   );
 };
