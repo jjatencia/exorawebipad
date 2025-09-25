@@ -1,5 +1,6 @@
 import { Appointment } from '../types';
 import { PromocionesService } from './promocionesService';
+import { ServiciosService } from './serviciosService';
 
 export interface VentaData {
   usuario: string;
@@ -105,7 +106,29 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
   // Calcular descuentos por promociones
   const { importeConDescuento, descuentoTotal } = await calcularDescuentoPromociones(appointment);
 
-  // Preparar los datos como los espera la API (solo IDs, igual que la app que funciona)
+  // Obtener variantes completas para la API de ventas
+  let variantesCompletas: any[] = [];
+  try {
+    if (appointment.variantes && appointment.variantes.length > 0) {
+      // Obtener todas las variantes completas de la empresa
+      const todasLasVariantes = await ServiciosService.getVariantesCompletas(appointment.empresa);
+
+      // Filtrar solo las variantes que están en el appointment
+      const variantesIds = appointment.variantes.map(v => v._id);
+      variantesCompletas = todasLasVariantes.filter(variante => variantesIds.includes(variante._id));
+
+      if ((import.meta as any).env?.DEV) {
+        console.log('Variantes appointment:', appointment.variantes);
+        console.log('Variantes completas obtenidas:', variantesCompletas);
+      }
+    }
+  } catch (error) {
+    console.error('Error obteniendo variantes completas:', error);
+    // En caso de error, usar las variantes originales del appointment
+    variantesCompletas = appointment.variantes;
+  }
+
+  // Preparar los datos como los espera la API (con variantes completas)
   const ventaData: any = {
     empresa: appointment.empresa,
     usuario: appointment.usuario._id,
@@ -122,7 +145,7 @@ export const createVenta = async (appointment: Appointment, metodoPago: string):
       precio: servicio.precio,
       deleted: servicio.deleted || false
     })),
-    variantes: appointment.variantes,
+    variantes: variantesCompletas, // Usar las variantes completas
     metodoPago: metodoPago,
     productos: [],
     cita: appointment._id,

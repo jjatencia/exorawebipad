@@ -32,6 +32,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   const [precioConDescuento, setPrecioConDescuento] = useState<number>(appointment.importe);
   const [descuentoTotal, setDescuentoTotal] = useState<number>(0);
   const [loadingDescuentos, setLoadingDescuentos] = useState<boolean>(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
 
   // Estados para edición
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -346,6 +347,12 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   );
 
   const handleCompletePayment = async () => {
+    // Prevenir múltiples clicks
+    if (isProcessingPayment) {
+      return;
+    }
+
+    // Validaciones existentes
     if (!isDividedPayment) {
       // Modo normal: requiere método seleccionado
       if (!selectedPaymentMethod) {
@@ -358,53 +365,66 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
       }
     }
 
-    // Detectar si hay cambios comparando con los valores originales
-    const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
-    const hasVariantChanges = variantesSeleccionadas.length !== (appointment.variantes?.length || 0) ||
-      variantesSeleccionadas.some(v => !(appointment.variantes?.some(av => av._id === v._id)));
-    const hasPromocionChanges = promocionesSeleccionadas.length !== (appointment.promocion?.length || 0) ||
-      promocionesSeleccionadas.some(p => !appointment.promocion?.includes(p)) ||
-      appointment.promocion?.some(p => !promocionesSeleccionadas.includes(p));
+    // Activar estado de procesamiento INMEDIATAMENTE
+    setIsProcessingPayment(true);
 
-    let editedAppointment: Appointment | undefined;
+    try {
+      // Detectar si hay cambios comparando con los valores originales
+      const hasServiceChanges = servicioSeleccionado?._id !== appointment.servicios[0]?._id;
+      const hasVariantChanges = variantesSeleccionadas.length !== (appointment.variantes?.length || 0) ||
+        variantesSeleccionadas.some(v => !(appointment.variantes?.some(av => av._id === v._id)));
+      const hasPromocionChanges = promocionesSeleccionadas.length !== (appointment.promocion?.length || 0) ||
+        promocionesSeleccionadas.some(p => !appointment.promocion?.includes(p)) ||
+        appointment.promocion?.some(p => !promocionesSeleccionadas.includes(p));
 
-    // Si hay cambios, crear un appointment actualizado
-    if (hasServiceChanges || hasVariantChanges || hasPromocionChanges) {
-      editedAppointment = {
-        ...appointment,
-        servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
-        variantes: variantesSeleccionadas,
-        promocion: promocionesSeleccionadas,
-        importe: precioConDescuento
-      };
-    }
+      let editedAppointment: Appointment | undefined;
 
-    if (!isDividedPayment) {
-      // Modo normal: un solo pago
-      if (selectedPaymentMethod === 'Monedero' && onWalletPayment) {
-        // Usar el callback específico del monedero
-        onWalletPayment(appointment._id, editedAppointment);
-      } else if (onCompletePayment) {
-        // Otros métodos de pago
-        onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
+      // Si hay cambios, crear un appointment actualizado
+      if (hasServiceChanges || hasVariantChanges || hasPromocionChanges) {
+        editedAppointment = {
+          ...appointment,
+          servicios: servicioSeleccionado ? [servicioSeleccionado] : appointment.servicios,
+          variantes: variantesSeleccionadas,
+          promocion: promocionesSeleccionadas,
+          importe: precioConDescuento
+        };
       }
-    } else {
-      // Modo dividido: múltiples pagos
-      const pagosActivos = Object.entries(paymentAmounts)
-        .filter(([_, amount]) => amount > 0)
-        .map(([methodId, amount]) => ({ methodId, amount }));
 
-      for (const pago of pagosActivos) {
-        const appointmentConImporte = editedAppointment
-          ? { ...editedAppointment, importe: pago.amount }
-          : { ...appointment, importe: pago.amount };
-
-        if (pago.methodId === 'Monedero' && onWalletPayment) {
-          onWalletPayment(appointment._id, appointmentConImporte);
+      if (!isDividedPayment) {
+        // Modo normal: un solo pago
+        if (selectedPaymentMethod === 'Monedero' && onWalletPayment) {
+          // Usar el callback específico del monedero
+          await onWalletPayment(appointment._id, editedAppointment);
         } else if (onCompletePayment) {
-          onCompletePayment(appointment._id, pago.methodId, appointmentConImporte);
+          // Otros métodos de pago
+          await onCompletePayment(appointment._id, selectedPaymentMethod, editedAppointment);
+        }
+      } else {
+        // Modo dividido: múltiples pagos
+        const pagosActivos = Object.entries(paymentAmounts)
+          .filter(([_, amount]) => amount > 0)
+          .map(([methodId, amount]) => ({ methodId, amount }));
+
+        // Para pagos divididos, usar await para procesar secuencialmente
+        for (const pago of pagosActivos) {
+          const appointmentConImporte = editedAppointment
+            ? { ...editedAppointment, importe: pago.amount }
+            : { ...appointment, importe: pago.amount };
+
+          if (pago.methodId === 'Monedero' && onWalletPayment) {
+            await onWalletPayment(appointment._id, appointmentConImporte);
+          } else if (onCompletePayment) {
+            await onCompletePayment(appointment._id, pago.methodId, appointmentConImporte);
+          }
         }
       }
+    } catch (error) {
+      console.error('Error procesando pago:', error);
+    } finally {
+      // Delay de seguridad antes de permitir otro click
+      setTimeout(() => {
+        setIsProcessingPayment(false);
+      }, 1000);
     }
   };
 
@@ -846,22 +866,32 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         <div className="flex-shrink-0 space-y-2">
           <button
             onClick={handleCompletePayment}
-            disabled={isDividedPayment ? !esPagoCompleto : !selectedPaymentMethod}
+            disabled={isProcessingPayment || (isDividedPayment ? !esPagoCompleto : !selectedPaymentMethod)}
             className={`w-full py-3 rounded-lg font-bold text-base transition-all ${
-              (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
+              isProcessingPayment
+                ? 'cursor-not-allowed opacity-75'
+                : (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
                 ? 'hover:opacity-90 shadow-lg'
                 : 'cursor-not-allowed'
             }`}
             style={
-              (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
+              isProcessingPayment
+                ? { backgroundColor: '#9CA3AF', color: 'white' }
+                : (isDividedPayment ? esPagoCompleto : selectedPaymentMethod)
                 ? { backgroundColor: '#555BF6', color: 'white' }
                 : { backgroundColor: '#d1d5db', color: '#6b7280' }
             }
           >
-            {isDividedPayment && totalAsignado > 0
-              ? `Completar Pago (€${totalAsignado.toFixed(2)})`
-              : 'Completar Pago'
-            }
+            {isProcessingPayment ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Procesando...</span>
+              </div>
+            ) : (
+              isDividedPayment && totalAsignado > 0
+                ? `Completar Pago (€${totalAsignado.toFixed(2)})`
+                : 'Completar Pago'
+            )}
           </button>
         </div>
       </div>

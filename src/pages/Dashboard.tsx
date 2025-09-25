@@ -3,7 +3,7 @@ import DayView from '../components/DayView';
 import DateSelector from '../components/DateSelector';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AppointmentModal from '../components/AppointmentModal';
-import { LogoutIcon, CalendarIcon, UserIcon, SettingsIcon, StatsIcon } from '../components/icons';
+import { LogoutIcon, CalendarIcon, UserIcon, SettingsIcon, StatsIcon, RefreshIcon } from '../components/icons';
 import { useDashboard } from '../hooks/useDashboard';
 
 const Dashboard: React.FC = () => {
@@ -42,13 +42,22 @@ const Dashboard: React.FC = () => {
                 Hola, {userName}
               </p>
             </div>
-            <button
-              onClick={handlers.logout}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2"
-              title="Cerrar sesión"
-            >
-              <LogoutIcon size={20} />
-            </button>
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={handlers.refreshAppointments}
+                className="text-gray-500 hover:text-gray-700 transition-colors p-2"
+                title="Actualizar citas"
+              >
+                <RefreshIcon size={20} />
+              </button>
+              <button
+                onClick={handlers.logout}
+                className="text-gray-500 hover:text-gray-700 transition-colors p-2"
+                title="Cerrar sesión"
+              >
+                <LogoutIcon size={20} />
+              </button>
+            </div>
           </div>
 
           {/* Date Selector */}

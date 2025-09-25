@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Appointment } from '../types';
-import { ClockIcon, ServiceIcon, LocationIcon, CalendarIcon, ProfessionalIcon, PhoneIcon, VariantIcon, EuroIcon, ShuffleIcon } from './icons';
+import { ClockIcon, CalendarIcon, ShuffleIcon } from './icons';
 
 interface DayViewProps {
   appointments: Appointment[];
@@ -201,7 +201,7 @@ const DayView: React.FC<DayViewProps> = ({
                       <div className="h-full p-3 flex flex-col overflow-hidden">
                         {appointment.isProfesionalRandom && (
                           <div className="absolute bottom-1 right-1">
-                            <ShuffleIcon size={12} className="text-[#555BF6]" title="Profesional aleatorio" />
+                            <ShuffleIcon size={12} className="text-[#555BF6]" />
                           </div>
                         )}
                         {heightPx < 60 ? (

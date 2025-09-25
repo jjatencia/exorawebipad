@@ -231,3 +231,11 @@ export const ShuffleIcon = createIcon(
     <line x1="4" y1="4" x2="9" y2="9" />
   </>
 );
+
+export const RefreshIcon = createIcon(
+  <>
+    <polyline points="23,4 23,10 17,10" />
+    <polyline points="1,20 1,14 7,14" />
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+  </>
+);
