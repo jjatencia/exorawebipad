@@ -65,6 +65,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     setPrecioConDescuento(appointment.importe);
     setDescuentoTotal(0);
 
+    // Resetear estados de UI
+    setIsEditing(false);
+    setShowPaymentOptions(false);
+    setSelectedPaymentMethod('');
+    setPaymentAmounts({});
+    setIsDividedPayment(false);
+
     setEstadoOriginal({
       servicioSeleccionado: servicio,
       variantesSeleccionadas: variantes,
@@ -114,10 +121,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     calcularDescuentos();
   }, [appointment]);
 
-  // Cargar datos para edición
+  // Cargar datos para edición Y actualizar variantes con precios
   useEffect(() => {
     const cargarDatosEdicion = async () => {
-      if (!isEditing || !appointment) return;
+      if (!appointment) return;
 
       try {
         const [servicios, variantes, promociones] = await Promise.all([
@@ -126,11 +133,39 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           PromocionesService.getPromocionesEmpresa(appointment.empresa)
         ]);
 
-        setServiciosDisponibles(servicios);
-        setVariantesDisponibles(variantes);
+        if (isEditing) {
+          setServiciosDisponibles(servicios);
+          setVariantesDisponibles(variantes);
+        }
         setPromocionesDisponibles(promociones);
+
+        // Actualizar variantes seleccionadas con precios reales de la API
+        if (appointment.variantes && appointment.variantes.length > 0) {
+          const variantesActualizadas = appointment.variantes.map(varianteExistente => {
+            const varianteConPrecio = variantes.find(v =>
+              v._id === varianteExistente._id || v.nombre === varianteExistente.nombre
+            );
+            return {
+              ...varianteExistente,
+              precio: varianteConPrecio?.precio || varianteExistente.precio || 0
+            };
+          });
+
+          // Solo actualizar si hay diferencias en precios
+          const hayDiferencias = variantesActualizadas.some((v, i) =>
+            v.precio !== variantesSeleccionadas[i]?.precio
+          );
+
+          if (hayDiferencias) {
+            setVariantesSeleccionadas(variantesActualizadas);
+            setEstadoOriginal(prev => ({
+              ...prev,
+              variantesSeleccionadas: variantesActualizadas
+            }));
+          }
+        }
       } catch (error) {
-        console.error('Error cargando datos para edición:', error);
+        console.error('Error cargando datos:', error);
       }
     };
 
@@ -458,6 +493,48 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                           </span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Promociones aplicadas */}
+                {appointment.promocion && appointment.promocion.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-medium text-gray-700 mb-2 flex items-center">
+                      <EuroIcon size={16} className="mr-2" />
+                      Promociones Aplicadas:
+                    </h4>
+                    <div className="space-y-2">
+                      {promocionesDisponibles
+                        .filter(promocion => appointment.promocion.includes(promocion._id))
+                        .map((promocion, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">
+                                {promocion.titulo || 'Promoción especial'}
+                              </span>
+                              {promocion.descripcion && (
+                                <p className="text-xs text-gray-500 mt-1">{promocion.descripcion}</p>
+                              )}
+                            </div>
+                            <span className="text-sm font-bold text-green-600">
+                              {promocion.porcentaje && `-${promocion.porcentaje}%`}
+                              {promocion.cifra && `-${((promocion.cifra || 0) / 100).toFixed(2)}€`}
+                            </span>
+                          </div>
+                        ))}
+                      {promocionesDisponibles.filter(p => appointment.promocion.includes(p._id)).length === 0 && (
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">
+                              {appointment.promocion.length} promoción{appointment.promocion.length > 1 ? 'es' : ''} aplicada{appointment.promocion.length > 1 ? 's' : ''}
+                            </span>
+                            <span className="text-sm font-bold text-green-600">
+                              -€{descuentoTotal.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
